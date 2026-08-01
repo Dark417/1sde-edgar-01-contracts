@@ -1,5 +1,5 @@
-# Gold marts (data contracts §4). No createIndex anywhere — unsupported by the
-# Databricks extension; use changeClusterColumns if clustering is ever wanted.
+# Gold marts (data contracts §4). No index-creation change types anywhere —
+# unsupported by the Databricks extension; use changeClusterColumns instead.
 databaseChangeLog:
   - changeSet:
       id: 040-gold-financials-current-create
