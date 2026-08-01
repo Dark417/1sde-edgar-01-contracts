@@ -12,15 +12,15 @@ from datetime import date
 from enum import StrEnum
 from typing import Final, Literal
 
-CATALOG: Final[str] = "fin"
+CATALOG: Final[str] = "edgar"
 SCHEMA_LANDING: Final[str] = "landing"
 SCHEMA_BRONZE: Final[str] = "bronze"
 SCHEMA_SILVER: Final[str] = "silver"
 SCHEMA_GOLD: Final[str] = "gold"
 
-RAW_BUCKET_DEFAULT: Final[str] = "fin-lake-raw"
-SERVING_BUCKET_DEFAULT: Final[str] = "fin-lake-serving"
-VOLUME_LANDING: Final[str] = "/Volumes/fin/landing/edgar"
+RAW_BUCKET_DEFAULT: Final[str] = "edgar-lake-raw"
+SERVING_BUCKET_DEFAULT: Final[str] = "edgar-lake-serving"
+VOLUME_LANDING: Final[str] = "/Volumes/edgar/landing/edgar"
 
 _ACCESSION_CANONICAL: Final[re.Pattern[str]] = re.compile(r"^\d{10}-\d{2}-\d{6}$")
 _ACCESSION_BARE: Final[re.Pattern[str]] = re.compile(r"^\d{18}$")
@@ -35,7 +35,7 @@ class Stream(StrEnum):
 
 
 def table(schema: str, name: str) -> str:
-    """Return the fully qualified table name ``fin.<schema>.<name>``.
+    """Return the fully qualified table name ``edgar.<schema>.<name>``.
 
     Does not handle: validating that the table exists or that the schema is one
     of the four known schemas.

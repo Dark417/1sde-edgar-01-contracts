@@ -16,7 +16,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Final, Literal
 
-from fin_lakehouse_contracts import names
+from edgar_lakehouse_contracts import names
 
 _SILVER_FILING: Final[str] = names.table(names.SCHEMA_SILVER, "filing")
 _SILVER_COMPANY: Final[str] = names.table(names.SCHEMA_SILVER, "company")

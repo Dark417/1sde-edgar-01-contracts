@@ -1,6 +1,6 @@
-# 1sde-databricks-01-contracts
+# 1sde-databricks-edgar-01-contracts
 
-**Repo 1 of 5** in the fin-lakehouse project — the shared contract layer for a
+**Repo 1 of 5** in the edgar-lakehouse project — the shared contract layer for a
 Databricks (AWS) medallion lakehouse over SEC EDGAR filings and XBRL financial
 facts. Nothing else compiles until this is published.
 
@@ -16,7 +16,7 @@ facts. Nothing else compiles until this is published.
   Delta table. Append-only, explicit rollbacks, applied via the
   [liquibase-databricks](https://github.com/liquibase/liquibase-databricks)
   extension.
-- **`fin_lakehouse_contracts`** (`src/`) — Pydantic models, table/path name
+- **`edgar_lakehouse_contracts`** (`src/`) — Pydantic models, table/path name
   constants, the DQ rule registry, XBRL concept mappings, and Spark
   `StructType`s behind a lazy import (`pyspark` is *not* a runtime dependency).
 - **The schema-drift test** (`tests/test_schema_drift.py`) — mechanically diffs
@@ -32,7 +32,7 @@ to your workspace)
 ## Layout
 
 ```
-src/fin_lakehouse_contracts/
+src/edgar_lakehouse_contracts/
 ├── names.py         # L0: constants + deterministic path/id builders
 ├── envelope.py      # L1: landing envelope model
 ├── models.py        # L1: raw record models
@@ -55,7 +55,7 @@ pytest -m spark                      # needs a local JVM
 
 ## Apply the DDL
 
-Requires repo 2's Terraform to have created the `fin` catalog and schemas
+Requires repo 2's Terraform to have created the `edgar` catalog and schemas
 first (the one backward edge in the build order):
 
 ```bash
@@ -67,7 +67,7 @@ liquibase update
 
 ## Consumers
 
-Repos 2–5 pin `fin-lakehouse-contracts==<version>` exactly and never read
+Repos 2–5 pin `edgar-lakehouse-contracts==<version>` exactly and never read
 `main`. Breaking changes follow expand → migrate → contract with the rollout
 order `contracts → pipelines → ingest → serving` (see
 [MIGRATION.md](docs/MIGRATION.md)).

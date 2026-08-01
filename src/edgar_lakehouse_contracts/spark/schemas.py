@@ -4,7 +4,7 @@ This module and ``changelog/`` are the two representations of the lakehouse
 schema. They are deliberately not generated from each other (ADR-002); the
 drift test in ``tests/test_schema_drift.py`` is what keeps them identical.
 
-pyspark is imported lazily so that ``import fin_lakehouse_contracts`` works in
+pyspark is imported lazily so that ``import edgar_lakehouse_contracts`` works in
 environments without Spark. Does not handle: table creation (Liquibase) or any
 Spark session concerns.
 """
@@ -15,7 +15,7 @@ from collections.abc import Mapping
 from functools import cache
 from typing import TYPE_CHECKING, Any, Final
 
-from fin_lakehouse_contracts import names
+from edgar_lakehouse_contracts import names
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from pyspark.sql.types import DataType, StructType

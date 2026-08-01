@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from fin_lakehouse_contracts import names
-from fin_lakehouse_contracts.dq import DQ_CHECKS, checks_for
+from edgar_lakehouse_contracts import names
+from edgar_lakehouse_contracts.dq import DQ_CHECKS, checks_for
 
 
 def test_every_prevents_is_meaningful() -> None:

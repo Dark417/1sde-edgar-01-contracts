@@ -22,13 +22,13 @@ class _BlockPyspark:
 
 sys.meta_path.insert(0, _BlockPyspark())
 
-import fin_lakehouse_contracts
-import fin_lakehouse_contracts.names
-import fin_lakehouse_contracts.envelope
-import fin_lakehouse_contracts.models
-import fin_lakehouse_contracts.concepts
-import fin_lakehouse_contracts.dq
-import fin_lakehouse_contracts.spark  # the guard package itself must stay clean
+import edgar_lakehouse_contracts
+import edgar_lakehouse_contracts.names
+import edgar_lakehouse_contracts.envelope
+import edgar_lakehouse_contracts.models
+import edgar_lakehouse_contracts.concepts
+import edgar_lakehouse_contracts.dq
+import edgar_lakehouse_contracts.spark  # the guard package itself must stay clean
 
 print("IMPORT_OK")
 """

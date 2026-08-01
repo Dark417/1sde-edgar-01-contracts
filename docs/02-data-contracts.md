@@ -1,15 +1,15 @@
-# Data Contracts — fin lakehouse
+# Data Contracts — edgar lakehouse
 
 > **Authoritative.** Every column, type, and nullability in the five repos comes from
 > this document. Code that disagrees with this document is wrong; if this document is
-> wrong, change it here first and bump `fin_lakehouse_contracts` per `MIGRATION.md`.
+> wrong, change it here first and bump `edgar_lakehouse_contracts` per `MIGRATION.md`.
 >
 > Type discipline (applies everywhere):
 > - `cik` is `STRING`, zero-padded to 10 characters. Never an integer — leading zeros
 >   are semantically meaningful in EDGAR URLs.
 > - Timestamps are UTC `TIMESTAMP`. Dates are `DATE`. No string dates south of bronze.
 > - Money/fact values are `DECIMAL(38,6)`.
-> - Catalog is `fin`; schemas are `landing`, `bronze`, `silver`, `gold`.
+> - Catalog is `edgar`; schemas are `landing`, `bronze`, `silver`, `gold`.
 
 ---
 
@@ -80,7 +80,7 @@ Landing paths (same filename in both modes, only the prefix differs):
 
 ```
 s3://{raw_bucket}/edgar/{stream}/dt={logical_date}/{batch_id}.json.gz
-/Volumes/fin/landing/edgar/{stream}/dt={logical_date}/{batch_id}.json.gz
+/Volumes/edgar/landing/edgar/{stream}/dt={logical_date}/{batch_id}.json.gz
 ```
 
 ---
@@ -98,7 +98,7 @@ All bronze tables are **append-only** and carry the six metadata columns:
 | `_schema_version` | STRING | no |
 | `_rescued_data` | STRING | yes |
 
-### §2.1 `fin.bronze.filing_index_raw`
+### §2.1 `edgar.bronze.filing_index_raw`
 
 Payload fields pass through as **STRING** (typing happens in silver):
 
@@ -111,7 +111,7 @@ Payload fields pass through as **STRING** (typing happens in silver):
 | `file_name` | STRING | yes |
 | + six metadata columns | | |
 
-### §2.2 `fin.bronze.company_submissions_raw`
+### §2.2 `edgar.bronze.company_submissions_raw`
 
 | Column | Type | Null |
 |---|---|---|
@@ -123,7 +123,7 @@ Payload fields pass through as **STRING** (typing happens in silver):
 deeply nested and its shape changes; exploding at bronze couples us to a shape we do
 not control.
 
-### §2.3 `fin.bronze.company_concept_raw`
+### §2.3 `edgar.bronze.company_concept_raw`
 
 | Column | Type | Null |
 |---|---|---|
@@ -142,7 +142,7 @@ and never updated; `_last_seen_ts` updates on every merge.
 
 Each silver table has a quarantine twin (`{table}_quarantine`, §3.4).
 
-### §3.1 `fin.silver.filing`
+### §3.1 `edgar.silver.filing`
 
 Business key: `accession_number`.
 
@@ -170,7 +170,7 @@ Business key: `accession_number`.
 | `filing_filed_date_present` | reject | `filed_date IS NOT NULL` | Null filed dates breaking restatement ordering, which is ordered by filed_date |
 | `filing_filed_date_sane` | warn | `filed_date >= DATE'1993-01-01' AND filed_date <= current_date()` | Obviously wrong filed dates (pre-EDGAR or future) polluting activity trends unnoticed |
 
-### §3.2 `fin.silver.company` — SCD-2
+### §3.2 `edgar.silver.company` — SCD-2
 
 Natural key: `cik`. Tracked columns: `name, sic, sic_description,
 state_of_incorporation, fiscal_year_end, tickers, exchanges`.
@@ -204,7 +204,7 @@ stable and unsorted hashing generates a spurious version every day.
 | `company_one_current_per_cik` | reject_batch | `sum(CASE WHEN is_current THEN 1 ELSE 0 END) OVER (PARTITION BY cik) = 1` | Multiple current SCD-2 versions per cik fanning out every downstream join and doubling gold row counts |
 | `company_valid_range` | reject_batch | `valid_to IS NULL OR valid_to >= valid_from` | Negative validity intervals corrupting as-of joins against the dimension |
 
-### §3.3 `fin.silver.financial_fact` — bitemporal
+### §3.3 `edgar.silver.financial_fact` — bitemporal
 
 **Grain: `(cik, taxonomy, concept, unit, period_start, period_end,
 accession_number)`.** The asserting accession is part of the grain — this is what
@@ -246,8 +246,8 @@ makes restatement detection a query instead of a reconciliation job. The same
 
 ### §3.4 Quarantine tables
 
-`fin.silver.filing_quarantine`, `fin.silver.company_quarantine`,
-`fin.silver.financial_fact_quarantine`. Each carries the columns of its source table
+`edgar.silver.filing_quarantine`, `edgar.silver.company_quarantine`,
+`edgar.silver.financial_fact_quarantine`. Each carries the columns of its source table
 **with every column nullable** (a quarantined row is by definition malformed), plus:
 
 | Column | Type | Null |
@@ -261,7 +261,7 @@ makes restatement detection a query instead of a reconciliation job. The same
 
 ## §4 Gold
 
-### §4.1 `fin.gold.financials_current`
+### §4.1 `edgar.gold.financials_current`
 
 Latest assertion per `(cik, concept, unit, period_start, period_end)`, i.e. the
 restated view of the world. One row per key, the assertion with the greatest
@@ -284,7 +284,7 @@ restated view of the world. One row per key, the assertion with the greatest
 | `is_restated` | BOOLEAN | no |
 | `_updated_ts` | TIMESTAMP | no |
 
-### §4.2 `fin.gold.restatement_event`
+### §4.2 `edgar.gold.restatement_event`
 
 Consecutive assertions of the same fact with a materially different value. Comparison
 is scoped to identical `(cik, concept_canonical, unit, period_start, period_end,
@@ -316,7 +316,7 @@ abs(later.value - earlier.value) > greatest(abs(earlier.value) * 1e-6, 1e-6)
 | `materiality_band` | STRING | no | `immaterial` <1%, `notable` 1–5%, `material` >5% — a **product heuristic, not an accounting standard** |
 | `detected_ts` | TIMESTAMP | no | |
 
-### §4.3 `fin.gold.filing_activity_daily`
+### §4.3 `edgar.gold.filing_activity_daily`
 
 | Column | Type | Null |
 |---|---|---|
@@ -327,7 +327,7 @@ abs(later.value - earlier.value) > greatest(abs(earlier.value) * 1e-6, 1e-6)
 | `distinct_ciks` | BIGINT | no |
 | `_updated_ts` | TIMESTAMP | no |
 
-### §4.4 `fin.gold.company_profile`
+### §4.4 `edgar.gold.company_profile`
 
 One row per company in the universe.
 
@@ -373,5 +373,5 @@ s3://{serving_bucket}/v1/_manifest.json
 }
 ```
 
-Invariant: `gold_max_filed_date == max(filed_date) in fin.silver.filing` at export
+Invariant: `gold_max_filed_date == max(filed_date) in edgar.silver.filing` at export
 time. Repo 5's `/health` returns 503 when `now − gold_max_filed_date > 48h`.

@@ -9,7 +9,7 @@ account at all**.
 ## A. Run the package locally (no Databricks, no Java)
 
 ```powershell
-cd 1sde-databricks-01-contracts
+cd 1sde-databricks-edgar-01-contracts
 python -m venv .venv
 .venv\Scripts\pip install -e ".[dev]"
 
@@ -34,8 +34,8 @@ Quick smoke of the package as a consumer would use it:
 ```powershell
 .venv\Scripts\python -c @"
 from datetime import date
-from fin_lakehouse_contracts import names
-from fin_lakehouse_contracts.dq import checks_for
+from edgar_lakehouse_contracts import names
+from edgar_lakehouse_contracts.dq import checks_for
 print(names.batch_id(names.Stream.FILING_INDEX, date(2026, 7, 29)))
 print(names.landing_path('s3', 'filing_index', date(2026, 7, 29)))
 print(names.landing_path('volume', 'filing_index', date(2026, 7, 29)))
@@ -151,21 +151,21 @@ copy `HTTP path`, looks like `/sql/1.0/warehouses/<warehouse-id>`.
 
 ### C.4 Prerequisite: the catalog and schemas must exist first
 
-Liquibase migrates **tables**; the `fin` catalog and its four schemas are
+Liquibase migrates **tables**; the `edgar` catalog and its four schemas are
 repo 2 Terraform resources. `liquibase update` before they exist fails with
-`Catalog 'fin' does not exist` — correct behavior, not a bug.
+`Catalog 'edgar' does not exist` — correct behavior, not a bug.
 
 - **Recommended:** build repo 2 first and let `terraform apply` create them.
 - **Demo shortcut** (if you want tables tonight): create them by hand in the
   SQL editor, and later reconcile with `terraform import` in repo 2:
 
 ```sql
-CREATE CATALOG IF NOT EXISTS fin;
-CREATE SCHEMA IF NOT EXISTS fin.landing;
-CREATE SCHEMA IF NOT EXISTS fin.bronze;
-CREATE SCHEMA IF NOT EXISTS fin.silver;
-CREATE SCHEMA IF NOT EXISTS fin.gold;
-CREATE VOLUME IF NOT EXISTS fin.landing.edgar;
+CREATE CATALOG IF NOT EXISTS edgar;
+CREATE SCHEMA IF NOT EXISTS edgar.landing;
+CREATE SCHEMA IF NOT EXISTS edgar.bronze;
+CREATE SCHEMA IF NOT EXISTS edgar.silver;
+CREATE SCHEMA IF NOT EXISTS edgar.gold;
+CREATE VOLUME IF NOT EXISTS edgar.landing.edgar;
 ```
 
 ### C.5 Wire the credentials into Liquibase
@@ -177,7 +177,7 @@ copy changelog\liquibase.properties.example changelog\liquibase.properties  # gi
 Edit `changelog/liquibase.properties`:
 
 ```properties
-url=jdbc:databricks://dbc-xxxxxxxx-xxxx.cloud.databricks.com:443/default;transportMode=http;ssl=1;httpPath=/sql/1.0/warehouses/<warehouse-id>;ConnCatalog=fin;ConnSchema=default
+url=jdbc:databricks://dbc-xxxxxxxx-xxxx.cloud.databricks.com:443/default;transportMode=http;ssl=1;httpPath=/sql/1.0/warehouses/<warehouse-id>;ConnCatalog=edgar;ConnSchema=default
 username=token
 password=dapiXXXXXXXXXXXXXXXX
 changeLogFile=changelog/db.changelog-root.yaml
@@ -206,10 +206,10 @@ Using the portable CLI from Option 1 (from the repo root, JAVA_HOME set as in §
 Verify in the workspace SQL editor:
 
 ```sql
-SHOW TABLES IN fin.bronze;   -- 3 tables
-SHOW TABLES IN fin.silver;   -- 6 (3 + 3 quarantine)
-SHOW TABLES IN fin.gold;     -- 4
-SELECT id, dateexecuted FROM fin.default.DATABASECHANGELOG ORDER BY dateexecuted;
+SHOW TABLES IN edgar.bronze;   -- 3 tables
+SHOW TABLES IN edgar.silver;   -- 6 (3 + 3 quarantine)
+SHOW TABLES IN edgar.gold;     -- 4
+SELECT id, dateexecuted FROM edgar.default.DATABASECHANGELOG ORDER BY dateexecuted;
 ```
 
 ### C.7 Databricks CLI (needed from repo 4 onward, set it up once)
@@ -221,4 +221,4 @@ databricks catalogs list         # smoke test
 ```
 
 The same host/PAT pair also goes into AWS Secrets Manager as
-`/fin-lakehouse/databricks/pat` when you bootstrap repo 2 (§9.2 of its spec).
+`/edgar-lakehouse/databricks/pat` when you bootstrap repo 2 (§9.2 of its spec).

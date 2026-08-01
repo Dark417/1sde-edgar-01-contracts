@@ -6,8 +6,8 @@ from datetime import date
 
 import pytest
 
-from fin_lakehouse_contracts import names
-from fin_lakehouse_contracts.names import Stream
+from edgar_lakehouse_contracts import names
+from edgar_lakehouse_contracts.names import Stream
 
 
 class TestBatchId:
@@ -46,12 +46,12 @@ class TestLandingPath:
 
     def test_s3_prefix(self) -> None:
         path = names.landing_path("s3", Stream.FILING_INDEX, date(2026, 7, 29))
-        assert path.startswith("s3://fin-lake-raw/edgar/filing_index/dt=2026-07-29/")
+        assert path.startswith("s3://edgar-lake-raw/edgar/filing_index/dt=2026-07-29/")
         assert path.endswith(".json.gz")
 
     def test_volume_prefix(self) -> None:
         path = names.landing_path("volume", Stream.COMPANY_CONCEPT, date(2026, 7, 29))
-        assert path.startswith("/Volumes/fin/landing/edgar/company_concept/dt=2026-07-29/")
+        assert path.startswith("/Volumes/edgar/landing/edgar/company_concept/dt=2026-07-29/")
 
     def test_custom_bucket(self) -> None:
         path = names.landing_path("s3", Stream.FILING_INDEX, date(2026, 7, 29), raw_bucket="b")
@@ -94,4 +94,4 @@ class TestNormalizeAccession:
 
 class TestTable:
     def test_fully_qualified(self) -> None:
-        assert names.table(names.SCHEMA_SILVER, "filing") == "fin.silver.filing"
+        assert names.table(names.SCHEMA_SILVER, "filing") == "edgar.silver.filing"

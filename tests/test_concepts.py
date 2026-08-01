@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fin_lakehouse_contracts.concepts import CONCEPT_CANONICAL_MAP, CONCEPT_SET
+from edgar_lakehouse_contracts.concepts import CONCEPT_CANONICAL_MAP, CONCEPT_SET
 
 
 def test_exactly_fifteen_concepts() -> None:

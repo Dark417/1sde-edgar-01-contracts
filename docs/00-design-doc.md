@@ -1,4 +1,4 @@
-# Design Doc — fin lakehouse
+# Design Doc — edgar lakehouse
 
 > **Authoritative.** The five repo `AGENTS.md` files derive from this document and
 > `02-data-contracts.md`. Conflicts are reported, not resolved silently.
@@ -27,12 +27,12 @@ catalog prefix); no auth on the read API; no streaming.
 
 ```
             ┌────────────────────────  AWS  ────────────────────────┐
- SEC EDGAR ─► ECS Fargate (repo 3 CLI) ─► S3 fin-lake-raw  (system of record)
+ SEC EDGAR ─► ECS Fargate (repo 3 CLI) ─► S3 edgar-lake-raw  (system of record)
             │        │                                              │
             │        └────────► Databricks Volume (transport, may fail)
             │                        │                              │
             │   Databricks Free Edition (repo 4 jobs)               │
-            │   Auto Loader ─► bronze ─► silver ─► gold ─► export ──► S3 fin-lake-serving
+            │   Auto Loader ─► bronze ─► silver ─► gold ─► export ──► S3 edgar-lake-serving
             └────────────────────────────────────────────────────────┘
                                                                      │
                               Fly/Render (repo 5): FastAPI + DuckDB ◄┘ ─► public UI
@@ -75,7 +75,7 @@ These are design inputs, not annoyances:
 
 ### §5.1 Dual sink: S3 commits first, Volume push may fail
 
-S3 (`fin-lake-raw`) is the **system of record** and commits first. The push to the
+S3 (`edgar-lake-raw`) is the **system of record** and commits first. The push to the
 Databricks Volume is a *transport* that is allowed to fail (`LANDING_PUSH_FAILED`,
 exit 0). Ingest is never blocked by Databricks being down. Both sinks write
 byte-identical payloads to the same filename, so a replay from S3 reproduces exactly
@@ -112,11 +112,11 @@ import in repo 5 is a design failure, enforced by test and CI grep.
 
 | # | Repo | Owns | Publishes |
 |---|---|---|---|
-| 1 | `1sde-databricks-01-contracts` | DDL changelogs, `fin_lakehouse_contracts`, drift test | wheel + `CONTRACTS_VERSION` |
-| 2 | `1sde-databricks-02-infra` | Terraform: AWS + workspace objects | SSM `/fin-lakehouse/*` |
-| 3 | `1sde-databricks-03-ingest` | EDGAR client, sinks, container | landing objects, image |
-| 4 | `1sde-databricks-04-pipelines` | bronze/silver/gold jobs, export | serving Parquet + manifest |
-| 5 | `1sde-databricks-05-serving` | FastAPI + DuckDB + UI | public URL |
+| 1 | `1sde-databricks-edgar-01-contracts` | DDL changelogs, `edgar_lakehouse_contracts`, drift test | wheel + `CONTRACTS_VERSION` |
+| 2 | `1sde-databricks-edgar-02-infra` | Terraform: AWS + workspace objects | SSM `/edgar-lakehouse/*` |
+| 3 | `1sde-databricks-edgar-03-ingest` | EDGAR client, sinks, container | landing objects, image |
+| 4 | `1sde-databricks-edgar-04-pipelines` | bronze/silver/gold jobs, export | serving Parquet + manifest |
+| 5 | `1sde-databricks-edgar-05-serving` | FastAPI + DuckDB + UI | public URL |
 
 Build order 1→2→3→4→5 with one backward edge: repo 2 creates catalog/schemas, then
 repo 1's `liquibase update` runs. Config handoff is SSM Parameter Store, never

@@ -6,7 +6,7 @@ databaseChangeLog:
       author: dark417
       changes:
         - createTable:
-            catalogName: fin
+            catalogName: edgar
             schemaName: gold
             tableName: financials_current
             columns:
@@ -25,14 +25,14 @@ databaseChangeLog:
               - column: {name: is_restated, type: BOOLEAN, constraints: {nullable: false}}
               - column: {name: _updated_ts, type: TIMESTAMP, constraints: {nullable: false}}
       rollback:
-        - dropTable: {catalogName: fin, schemaName: gold, tableName: financials_current}
+        - dropTable: {catalogName: edgar, schemaName: gold, tableName: financials_current}
 
   - changeSet:
       id: 040-gold-restatement-event-create
       author: dark417
       changes:
         - createTable:
-            catalogName: fin
+            catalogName: edgar
             schemaName: gold
             tableName: restatement_event
             columns:
@@ -56,14 +56,14 @@ databaseChangeLog:
               - column: {name: materiality_band, type: STRING, constraints: {nullable: false}}
               - column: {name: detected_ts, type: TIMESTAMP, constraints: {nullable: false}}
       rollback:
-        - dropTable: {catalogName: fin, schemaName: gold, tableName: restatement_event}
+        - dropTable: {catalogName: edgar, schemaName: gold, tableName: restatement_event}
 
   - changeSet:
       id: 040-gold-filing-activity-daily-create
       author: dark417
       changes:
         - createTable:
-            catalogName: fin
+            catalogName: edgar
             schemaName: gold
             tableName: filing_activity_daily
             columns:
@@ -74,14 +74,14 @@ databaseChangeLog:
               - column: {name: distinct_ciks, type: BIGINT, constraints: {nullable: false}}
               - column: {name: _updated_ts, type: TIMESTAMP, constraints: {nullable: false}}
       rollback:
-        - dropTable: {catalogName: fin, schemaName: gold, tableName: filing_activity_daily}
+        - dropTable: {catalogName: edgar, schemaName: gold, tableName: filing_activity_daily}
 
   - changeSet:
       id: 040-gold-company-profile-create
       author: dark417
       changes:
         - createTable:
-            catalogName: fin
+            catalogName: edgar
             schemaName: gold
             tableName: company_profile
             columns:
@@ -98,4 +98,4 @@ databaseChangeLog:
               - column: {name: restatement_count, type: BIGINT, constraints: {nullable: false}}
               - column: {name: _updated_ts, type: TIMESTAMP, constraints: {nullable: false}}
       rollback:
-        - dropTable: {catalogName: fin, schemaName: gold, tableName: company_profile}
+        - dropTable: {catalogName: edgar, schemaName: gold, tableName: company_profile}

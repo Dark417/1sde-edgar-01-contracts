@@ -6,7 +6,7 @@ databaseChangeLog:
       author: dark417
       changes:
         - createTable:
-            catalogName: fin
+            catalogName: edgar
             schemaName: silver
             tableName: filing
             columns:
@@ -22,14 +22,14 @@ databaseChangeLog:
               - column: {name: _last_seen_ts, type: TIMESTAMP, constraints: {nullable: false}}
               - column: {name: _batch_id, type: STRING, constraints: {nullable: false}}
       rollback:
-        - dropTable: {catalogName: fin, schemaName: silver, tableName: filing}
+        - dropTable: {catalogName: edgar, schemaName: silver, tableName: filing}
 
   - changeSet:
       id: 020-silver-company-create
       author: dark417
       changes:
         - createTable:
-            catalogName: fin
+            catalogName: edgar
             schemaName: silver
             tableName: company
             columns:
@@ -49,14 +49,14 @@ databaseChangeLog:
               - column: {name: _last_seen_ts, type: TIMESTAMP, constraints: {nullable: false}}
               - column: {name: _batch_id, type: STRING, constraints: {nullable: false}}
       rollback:
-        - dropTable: {catalogName: fin, schemaName: silver, tableName: company}
+        - dropTable: {catalogName: edgar, schemaName: silver, tableName: company}
 
   - changeSet:
       id: 020-silver-financial-fact-create
       author: dark417
       changes:
         - createTable:
-            catalogName: fin
+            catalogName: edgar
             schemaName: silver
             tableName: financial_fact
             columns:
@@ -78,4 +78,4 @@ databaseChangeLog:
               - column: {name: _last_seen_ts, type: TIMESTAMP, constraints: {nullable: false}}
               - column: {name: _batch_id, type: STRING, constraints: {nullable: false}}
       rollback:
-        - dropTable: {catalogName: fin, schemaName: silver, tableName: financial_fact}
+        - dropTable: {catalogName: edgar, schemaName: silver, tableName: financial_fact}

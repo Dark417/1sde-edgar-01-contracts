@@ -12,7 +12,7 @@ are *business domains* (`entity_reference`, `instrument`, `presentation`), not
 layers. The catalog axis carries layer + environment.
 
 **B. One catalog per project/env with layer schemas (this project).**
-`fin.bronze`, `fin.silver`, `fin.gold`; environment separation by catalog
+`edgar.bronze`, `edgar.silver`, `edgar.gold`; environment separation by catalog
 prefix if ever needed.
 
 ## Why enterprises pick A
@@ -41,7 +41,7 @@ controls.
 
 ## Decision
 
-One catalog `fin`, schemas `landing`/`bronze`/`silver`/`gold`. Documented as a
+One catalog `edgar`, schemas `landing`/`bronze`/`silver`/`gold`. Documented as a
 demo-scale decision, not a general recommendation.
 
 ## Switch point

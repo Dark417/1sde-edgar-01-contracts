@@ -1,11 +1,11 @@
-# Repo 1 / 5 — `1sde-databricks-01-contracts`
+# Repo 1 / 5 — `1sde-databricks-edgar-01-contracts`
 
 > **How to use this file.** Copy it to the repo root as `AGENTS.md`. It is the
 > complete brief for a coding agent building this repo. Sections 0–8 are agent
 > instructions. Section 9 is for **you**, by hand. Section 10 is what the next repo
 > consumes — do not change it without bumping the major version.
 >
-> GitHub: `github.com/Dark417/1sde-databricks-01-contracts`
+> GitHub: `github.com/Dark417/1sde-databricks-edgar-01-contracts`
 > Build order position: **1 of 5. Nothing else compiles until this is published.**
 
 ---
@@ -32,7 +32,7 @@ even if nothing else is finished.
 
 ### Owns
 - Liquibase changelogs: the DDL for every bronze/silver/gold Delta table.
-- Python package `fin_lakehouse_contracts`: Pydantic models, Spark `StructType`s,
+- Python package `edgar_lakehouse_contracts`: Pydantic models, Spark `StructType`s,
   table/path name constants, DQ rule registry, concept mappings.
 - The schema-drift test between the two.
 - Semver policy, migration policy, and the landing-transport ADR.
@@ -86,7 +86,7 @@ JDBC          Databricks JDBC driver
 
 **Hard rule:** `pyspark` must NOT be a runtime dependency. Repos 3 and 5 import this
 package without Spark installed. Spark schema construction goes behind a lazy import.
-A test asserts `import fin_lakehouse_contracts` succeeds in an environment with no
+A test asserts `import edgar_lakehouse_contracts` succeeds in an environment with no
 `pyspark` on the path.
 
 ---
@@ -94,11 +94,11 @@ A test asserts `import fin_lakehouse_contracts` succeeds in an environment with 
 ## 4. Layered structure
 
 ```
-1sde-databricks-01-contracts/
+1sde-databricks-edgar-01-contracts/
 ├── AGENTS.md                        # this file
 ├── pyproject.toml
 ├── README.md
-├── src/fin_lakehouse_contracts/
+├── src/edgar_lakehouse_contracts/
 │   ├── __init__.py                  # __version__
 │   ├── py.typed
 │   ├── names.py                     # L0: pure constants + path builders
@@ -166,15 +166,15 @@ A test asserts `import fin_lakehouse_contracts` succeeds in an environment with 
 
 ### F-1 · `names.py` (L0)
 ```python
-CATALOG: Final[str] = "fin"
+CATALOG: Final[str] = "edgar"
 SCHEMA_LANDING: Final[str] = "landing"
 SCHEMA_BRONZE: Final[str] = "bronze"
 SCHEMA_SILVER: Final[str] = "silver"
 SCHEMA_GOLD: Final[str] = "gold"
 
-RAW_BUCKET_DEFAULT: Final[str] = "fin-lake-raw"
-SERVING_BUCKET_DEFAULT: Final[str] = "fin-lake-serving"
-VOLUME_LANDING: Final[str] = "/Volumes/fin/landing/edgar"
+RAW_BUCKET_DEFAULT: Final[str] = "edgar-lake-raw"
+SERVING_BUCKET_DEFAULT: Final[str] = "edgar-lake-serving"
+VOLUME_LANDING: Final[str] = "/Volumes/edgar/landing/edgar"
 
 
 class Stream(StrEnum):
@@ -262,7 +262,7 @@ def _spark_types():
 Expose `SCHEMAS: Mapping[str, "StructType"]` built lazily, and
 `get_schema(table_fqn: str) -> StructType`.
 
-**Acceptance:** `import fin_lakehouse_contracts` succeeds with `pyspark` absent
+**Acceptance:** `import edgar_lakehouse_contracts` succeeds with `pyspark` absent
 (test runs in a subprocess with a stripped `sys.path`).
 
 ### F-6 · Liquibase changelogs
@@ -282,14 +282,14 @@ databaseChangeLog:
       author: dark417
       changes:
         - createTable:
-            catalogName: fin
+            catalogName: edgar
             schemaName: silver
             tableName: filing
             columns:
               - column: {name: accession_number, type: STRING, constraints: {nullable: false}}
               # ...
       rollback:
-        - dropTable: {catalogName: fin, schemaName: silver, tableName: filing}
+        - dropTable: {catalogName: edgar, schemaName: silver, tableName: filing}
 ```
 
 **Acceptance**
@@ -366,9 +366,9 @@ The role ARN comes from repo 2 — until repo 2 exists, publish manually (§9.7)
 
 ### 9.1 Create the repo
 ```bash
-gh repo create Dark417/1sde-databricks-01-contracts \
+gh repo create Dark417/1sde-databricks-edgar-01-contracts \
   --private --add-readme --gitignore Python --license mit --clone
-cd 1sde-databricks-01-contracts
+cd 1sde-databricks-edgar-01-contracts
 ```
 
 ### 9.2 Place the background docs 🔴
@@ -402,7 +402,7 @@ cp changelog/liquibase.properties.example changelog/liquibase.properties  # giti
 `liquibase.properties`:
 ```properties
 url=jdbc:databricks://<workspace-host>:443/default;transportMode=http;ssl=1;\
-httpPath=/sql/1.0/warehouses/<warehouse-id>;ConnCatalog=fin;ConnSchema=default
+httpPath=/sql/1.0/warehouses/<warehouse-id>;ConnCatalog=edgar;ConnSchema=default
 username=token
 password=<PAT>
 changeLogFile=changelog/db.changelog-root.yaml
@@ -417,7 +417,7 @@ liquibase update
 ```
 **Do not run `update` before repo 2 has created the catalog and schemas.** Liquibase
 migrates tables, not catalogs. Expected first-time failure if you skip that:
-`Catalog 'fin' does not exist`. That is the correct behavior, not a bug.
+`Catalog 'edgar' does not exist`. That is the correct behavior, not a bug.
 
 Chicken-and-egg resolution: run repo 2's `terraform apply` for the catalog/schema
 resources first, then come back here.
@@ -427,7 +427,7 @@ The target bucket is created by repo 2 §9.1's hand bootstrap — run that first
 a by-hand step and does not require repo 2's Terraform to exist yet.
 ```bash
 python -m build
-aws s3 cp dist/fin_lakehouse_contracts-0.1.0-py3-none-any.whl \
+aws s3 cp dist/edgar_lakehouse_contracts-0.1.0-py3-none-any.whl \
   s3://<tf-bucket>/wheels/
 git tag v0.1.0 && git push --tags
 ```
@@ -444,7 +444,7 @@ CONTRACTS_VERSION=0.1.0
 
 | Output | Form | Consumed by |
 |---|---|---|
-| `fin_lakehouse_contracts` wheel | `s3://<tf-bucket>/wheels/*.whl` + GitHub release | 3, 4, 5 |
+| `edgar_lakehouse_contracts` wheel | `s3://<tf-bucket>/wheels/*.whl` + GitHub release | 3, 4, 5 |
 | `CONTRACTS_VERSION` | semver string, pinned | 2 (SSM), 3, 4, 5 (pyproject) |
 | `changelog/` | applied by Liquibase | 4 (job depends on tables existing) |
 | `names.py` constants | catalog/schema/volume/bucket names | 2 (Terraform must match these exactly) |
@@ -460,7 +460,7 @@ CONTRACTS_VERSION=0.1.0
 
 - [ ] `ruff`, `mypy --strict`, `pytest` all green locally
 - [ ] Coverage ≥ 90%
-- [ ] `import fin_lakehouse_contracts` works without pyspark
+- [ ] `import edgar_lakehouse_contracts` works without pyspark
 - [ ] `liquibase validate` passes
 - [ ] `liquibase update` applied against the real workspace, `DATABASECHANGELOG`
       populated

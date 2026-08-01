@@ -6,7 +6,7 @@ databaseChangeLog:
       author: dark417
       changes:
         - createTable:
-            catalogName: fin
+            catalogName: edgar
             schemaName: silver
             tableName: filing_quarantine
             columns:
@@ -26,14 +26,14 @@ databaseChangeLog:
               - column: {name: _dq_run_id, type: STRING, constraints: {nullable: false}}
               - column: {name: _quarantined_at, type: TIMESTAMP, constraints: {nullable: false}}
       rollback:
-        - dropTable: {catalogName: fin, schemaName: silver, tableName: filing_quarantine}
+        - dropTable: {catalogName: edgar, schemaName: silver, tableName: filing_quarantine}
 
   - changeSet:
       id: 030-silver-company-quarantine-create
       author: dark417
       changes:
         - createTable:
-            catalogName: fin
+            catalogName: edgar
             schemaName: silver
             tableName: company_quarantine
             columns:
@@ -57,14 +57,14 @@ databaseChangeLog:
               - column: {name: _dq_run_id, type: STRING, constraints: {nullable: false}}
               - column: {name: _quarantined_at, type: TIMESTAMP, constraints: {nullable: false}}
       rollback:
-        - dropTable: {catalogName: fin, schemaName: silver, tableName: company_quarantine}
+        - dropTable: {catalogName: edgar, schemaName: silver, tableName: company_quarantine}
 
   - changeSet:
       id: 030-silver-financial-fact-quarantine-create
       author: dark417
       changes:
         - createTable:
-            catalogName: fin
+            catalogName: edgar
             schemaName: silver
             tableName: financial_fact_quarantine
             columns:
@@ -90,4 +90,4 @@ databaseChangeLog:
               - column: {name: _dq_run_id, type: STRING, constraints: {nullable: false}}
               - column: {name: _quarantined_at, type: TIMESTAMP, constraints: {nullable: false}}
       rollback:
-        - dropTable: {catalogName: fin, schemaName: silver, tableName: financial_fact_quarantine}
+        - dropTable: {catalogName: edgar, schemaName: silver, tableName: financial_fact_quarantine}

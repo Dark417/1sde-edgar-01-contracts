@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 from datetime import UTC, date, datetime
 
-from fin_lakehouse_contracts.envelope import LandingEnvelope
-from fin_lakehouse_contracts.models import FilingIndexRecord
+from edgar_lakehouse_contracts.envelope import LandingEnvelope
+from edgar_lakehouse_contracts.models import FilingIndexRecord
 
 
 def _sample() -> LandingEnvelope:

@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "fin-lakehouse-contracts"
+name = "edgar-lakehouse-contracts"
 version = "0.1.0"
-description = "Shared contract layer for the fin lakehouse: schemas, names, DQ registry, Liquibase changelogs"
+description = "Shared contract layer for the edgar lakehouse: schemas, names, DQ registry, Liquibase changelogs"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
@@ -27,7 +27,7 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/fin_lakehouse_contracts"]
+packages = ["src/edgar_lakehouse_contracts"]
 
 [tool.ruff]
 line-length = 100
@@ -41,7 +41,7 @@ select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 strict = true
 python_version = "3.11"
 mypy_path = "src"
-packages = ["fin_lakehouse_contracts"]
+packages = ["edgar_lakehouse_contracts"]
 
 [[tool.mypy.overrides]]
 module = "pyspark.*"
@@ -55,5 +55,5 @@ markers = [
 addopts = "-q"
 
 [tool.coverage.run]
-source = ["src/fin_lakehouse_contracts"]
-omit = ["src/fin_lakehouse_contracts/spark/*"]
+source = ["src/edgar_lakehouse_contracts"]
+omit = ["src/edgar_lakehouse_contracts/spark/*"]

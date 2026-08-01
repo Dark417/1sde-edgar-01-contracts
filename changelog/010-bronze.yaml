@@ -7,7 +7,7 @@ databaseChangeLog:
       author: dark417
       changes:
         - createTable:
-            catalogName: fin
+            catalogName: edgar
             schemaName: bronze
             tableName: filing_index_raw
             columns:
@@ -23,14 +23,14 @@ databaseChangeLog:
               - column: {name: _schema_version, type: STRING, constraints: {nullable: false}}
               - column: {name: _rescued_data, type: STRING}
       rollback:
-        - dropTable: {catalogName: fin, schemaName: bronze, tableName: filing_index_raw}
+        - dropTable: {catalogName: edgar, schemaName: bronze, tableName: filing_index_raw}
 
   - changeSet:
       id: 010-bronze-company-submissions-raw-create
       author: dark417
       changes:
         - createTable:
-            catalogName: fin
+            catalogName: edgar
             schemaName: bronze
             tableName: company_submissions_raw
             columns:
@@ -43,14 +43,14 @@ databaseChangeLog:
               - column: {name: _schema_version, type: STRING, constraints: {nullable: false}}
               - column: {name: _rescued_data, type: STRING}
       rollback:
-        - dropTable: {catalogName: fin, schemaName: bronze, tableName: company_submissions_raw}
+        - dropTable: {catalogName: edgar, schemaName: bronze, tableName: company_submissions_raw}
 
   - changeSet:
       id: 010-bronze-company-concept-raw-create
       author: dark417
       changes:
         - createTable:
-            catalogName: fin
+            catalogName: edgar
             schemaName: bronze
             tableName: company_concept_raw
             columns:
@@ -65,4 +65,4 @@ databaseChangeLog:
               - column: {name: _schema_version, type: STRING, constraints: {nullable: false}}
               - column: {name: _rescued_data, type: STRING}
       rollback:
-        - dropTable: {catalogName: fin, schemaName: bronze, tableName: company_concept_raw}
+        - dropTable: {catalogName: edgar, schemaName: bronze, tableName: company_concept_raw}

@@ -6,8 +6,8 @@ from collections.abc import Iterator
 
 import pytest
 
-from fin_lakehouse_contracts import names
-from fin_lakehouse_contracts.spark import schemas as spark_schemas
+from edgar_lakehouse_contracts import names
+from edgar_lakehouse_contracts.spark import schemas as spark_schemas
 
 pytestmark = pytest.mark.spark
 
@@ -42,5 +42,5 @@ def test_get_schema_known_table() -> None:
 
 
 def test_get_schema_unknown_table_names_known_ones() -> None:
-    with pytest.raises(KeyError, match=r"fin.silver.filing"):
-        spark_schemas.get_schema("fin.silver.nope")
+    with pytest.raises(KeyError, match=r"edgar.silver.filing"):
+        spark_schemas.get_schema("edgar.silver.nope")

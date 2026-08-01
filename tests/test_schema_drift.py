@@ -15,7 +15,7 @@ from typing import Any
 
 import yaml
 
-from fin_lakehouse_contracts.spark import schemas as spark_schemas
+from edgar_lakehouse_contracts.spark import schemas as spark_schemas
 
 REPO_ROOT = Path(__file__).parents[1]
 CHANGELOG_DIR = REPO_ROOT / "changelog"
@@ -107,6 +107,6 @@ def test_drift_is_detected_and_names_the_column() -> None:
     problems = diff_schemas(broken, spark)
     assert problems, "broken fixture produced no drift — the drift test is not working"
     message = "\n".join(problems)
-    assert "fin.silver.filing" in message
+    assert "edgar.silver.filing" in message
     assert "filed_date" in message
     assert "string" in message and "date" in message

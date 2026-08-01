@@ -2,7 +2,7 @@
 
 ## Semver
 
-`fin_lakehouse_contracts` is semver'd. Downstream repos (2, 3, 4, 5) pin an
+`edgar_lakehouse_contracts` is semver'd. Downstream repos (2, 3, 4, 5) pin an
 exact version (`==`) and never read `main`.
 
 | Bump | When | Downstream action |

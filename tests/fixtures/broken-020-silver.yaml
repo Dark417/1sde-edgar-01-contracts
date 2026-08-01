@@ -6,7 +6,7 @@ databaseChangeLog:
       author: dark417
       changes:
         - createTable:
-            catalogName: fin
+            catalogName: edgar
             schemaName: silver
             tableName: filing
             columns:
@@ -22,4 +22,4 @@ databaseChangeLog:
               - column: {name: _last_seen_ts, type: TIMESTAMP, constraints: {nullable: false}}
               - column: {name: _batch_id, type: STRING, constraints: {nullable: false}}
       rollback:
-        - dropTable: {catalogName: fin, schemaName: silver, tableName: filing}
+        - dropTable: {catalogName: edgar, schemaName: silver, tableName: filing}
