@@ -168,24 +168,30 @@ A test asserts `import fin_lakehouse_contracts` succeeds in an environment with 
 ```python
 CATALOG: Final[str] = "fin"
 SCHEMA_LANDING: Final[str] = "landing"
-SCHEMA_BRONZE:  Final[str] = "bronze"
-SCHEMA_SILVER:  Final[str] = "silver"
-SCHEMA_GOLD:    Final[str] = "gold"
+SCHEMA_BRONZE: Final[str] = "bronze"
+SCHEMA_SILVER: Final[str] = "silver"
+SCHEMA_GOLD: Final[str] = "gold"
 
 RAW_BUCKET_DEFAULT: Final[str] = "fin-lake-raw"
 SERVING_BUCKET_DEFAULT: Final[str] = "fin-lake-serving"
 VOLUME_LANDING: Final[str] = "/Volumes/fin/landing/edgar"
+
 
 class Stream(StrEnum):
     FILING_INDEX = "filing_index"
     COMPANY_SUBMISSIONS = "company_submissions"
     COMPANY_CONCEPT = "company_concept"
 
+
 def table(schema: str, name: str) -> str: ...
 def batch_id(stream: str | Stream, logical_date: date) -> str: ...
-def landing_path(mode: Literal["s3", "volume"], stream: str | Stream,
-                 logical_date: date, raw_bucket: str = RAW_BUCKET_DEFAULT) -> str: ...
-def pad_cik(cik: str | int) -> str: ...        # -> 10-char zero-padded string
+def landing_path(
+    mode: Literal["s3", "volume"],
+    stream: str | Stream,
+    logical_date: date,
+    raw_bucket: str = RAW_BUCKET_DEFAULT,
+) -> str: ...
+def pad_cik(cik: str | int) -> str: ...  # -> 10-char zero-padded string
 def normalize_accession(raw: str) -> str: ...  # -> 0001234567-26-000123
 ```
 
@@ -225,10 +231,13 @@ class DQCheck:
     name: str
     table: str
     severity: Literal["reject", "warn", "reject_batch"]
-    expression: str   # Spark SQL boolean; True means the row is GOOD
-    prevents: str     # REQUIRED, >= 20 chars
+    expression: str  # Spark SQL boolean; True means the row is GOOD
+    prevents: str  # REQUIRED, >= 20 chars
 
-DQ_CHECKS: Final[tuple[DQCheck, ...]] = (...)
+
+DQ_CHECKS: Final[tuple[DQCheck, ...]] = ...
+
+
 def checks_for(table: str) -> tuple[DQCheck, ...]: ...
 ```
 Populate from `02-data-contracts.md` §3.1–3.3, every check, exactly once.
@@ -247,6 +256,7 @@ One `StructType` per bronze and silver table. Module-level lazy import:
 ```python
 def _spark_types():
     from pyspark.sql import types as T
+
     return T
 ```
 Expose `SCHEMAS: Mapping[str, "StructType"]` built lazily, and

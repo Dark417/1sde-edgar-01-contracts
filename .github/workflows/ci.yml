@@ -1,0 +1,81 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      - name: Lint
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Types
+        run: mypy --strict src/
+
+      - name: Unit tests (no spark) + coverage gate
+        run: pytest -m "not spark" --cov --cov-fail-under=90
+
+      - name: Spark tests
+        run: pytest -m spark
+
+      - name: Grep gate — no createIndex in changelogs
+        run: |
+          if grep -rn "createIndex" changelog/; then
+            echo "createIndex is unsupported by the Databricks extension; use changeClusterColumns" >&2
+            exit 1
+          fi
+
+      - name: Liquibase validate (offline, no JDBC connection)
+        uses: liquibase-github-actions/validate@v4.32.0
+        with:
+          changelogFile: changelog/db.changelog-root.yaml
+          url: "offline:databricks"
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # OIDC to AWS — role from repo 2; no long-lived keys
+      contents: write # gh release
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build wheel
+        run: |
+          pip install build
+          python -m build
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Upload wheel to the wheels prefix
+        run: aws s3 cp dist/*.whl "s3://${{ secrets.TF_BUCKET }}/wheels/"
+
+      - name: GitHub release with wheel attached
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" dist/*.whl --generate-notes

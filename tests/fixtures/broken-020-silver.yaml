@@ -1,0 +1,25 @@
+# Fixture for test_schema_drift.py: a copy of the silver.filing changeset with
+# filed_date deliberately broken to STRING (must be DATE). Never applied.
+databaseChangeLog:
+  - changeSet:
+      id: broken-020-silver-filing-create
+      author: dark417
+      changes:
+        - createTable:
+            catalogName: fin
+            schemaName: silver
+            tableName: filing
+            columns:
+              - column: {name: accession_number, type: STRING, constraints: {nullable: false}}
+              - column: {name: cik, type: STRING, constraints: {nullable: false}}
+              - column: {name: company_name, type: STRING}
+              - column: {name: form_type, type: STRING, constraints: {nullable: false}}
+              - column: {name: base_form_type, type: STRING, constraints: {nullable: false}}
+              - column: {name: is_amendment, type: BOOLEAN, constraints: {nullable: false}}
+              - column: {name: filed_date, type: STRING, constraints: {nullable: false}}
+              - column: {name: source_file_name, type: STRING}
+              - column: {name: _first_seen_ts, type: TIMESTAMP, constraints: {nullable: false}}
+              - column: {name: _last_seen_ts, type: TIMESTAMP, constraints: {nullable: false}}
+              - column: {name: _batch_id, type: STRING, constraints: {nullable: false}}
+      rollback:
+        - dropTable: {catalogName: fin, schemaName: silver, tableName: filing}

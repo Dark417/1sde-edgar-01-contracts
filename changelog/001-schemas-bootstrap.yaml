@@ -1,0 +1,19 @@
+# The catalog `fin`, the schemas landing/bronze/silver/gold, and the landing
+# volume are Terraform resources owned by repo 2 (1sde-databricks-02-infra).
+# Liquibase migrates TABLES only and assumes those containers already exist.
+# If `liquibase update` fails with "Catalog 'fin' does not exist", run repo 2's
+# `terraform apply` first — that is the documented backward edge in the build
+# order, not a bug here.
+databaseChangeLog:
+  - changeSet:
+      id: 001-schemas-bootstrap-noop
+      author: dark417
+      comment: >-
+        No-op guard changeset. Documents that catalog/schema/volume creation is
+        owned by Terraform (repo 2); this changelog intentionally creates no
+        schema-level objects.
+      changes:
+        - tagDatabase:
+            tag: bootstrap
+      rollback:
+        - empty

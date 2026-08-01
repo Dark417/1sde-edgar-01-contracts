@@ -1,0 +1,68 @@
+# Bronze: append-only raw tables, verbatim payloads plus the six metadata
+# columns (data contracts §2). cik is STRING everywhere — leading zeros are
+# semantically meaningful in EDGAR URLs; never an int.
+databaseChangeLog:
+  - changeSet:
+      id: 010-bronze-filing-index-raw-create
+      author: dark417
+      changes:
+        - createTable:
+            catalogName: fin
+            schemaName: bronze
+            tableName: filing_index_raw
+            columns:
+              - column: {name: company_name, type: STRING}
+              - column: {name: form_type, type: STRING}
+              - column: {name: cik, type: STRING}
+              - column: {name: date_filed, type: STRING}
+              - column: {name: file_name, type: STRING}
+              - column: {name: _source_file, type: STRING, constraints: {nullable: false}}
+              - column: {name: _ingest_ts, type: TIMESTAMP, constraints: {nullable: false}}
+              - column: {name: _batch_id, type: STRING, constraints: {nullable: false}}
+              - column: {name: _logical_date, type: DATE, constraints: {nullable: false}}
+              - column: {name: _schema_version, type: STRING, constraints: {nullable: false}}
+              - column: {name: _rescued_data, type: STRING}
+      rollback:
+        - dropTable: {catalogName: fin, schemaName: bronze, tableName: filing_index_raw}
+
+  - changeSet:
+      id: 010-bronze-company-submissions-raw-create
+      author: dark417
+      changes:
+        - createTable:
+            catalogName: fin
+            schemaName: bronze
+            tableName: company_submissions_raw
+            columns:
+              - column: {name: cik, type: STRING}
+              - column: {name: payload_json, type: STRING}
+              - column: {name: _source_file, type: STRING, constraints: {nullable: false}}
+              - column: {name: _ingest_ts, type: TIMESTAMP, constraints: {nullable: false}}
+              - column: {name: _batch_id, type: STRING, constraints: {nullable: false}}
+              - column: {name: _logical_date, type: DATE, constraints: {nullable: false}}
+              - column: {name: _schema_version, type: STRING, constraints: {nullable: false}}
+              - column: {name: _rescued_data, type: STRING}
+      rollback:
+        - dropTable: {catalogName: fin, schemaName: bronze, tableName: company_submissions_raw}
+
+  - changeSet:
+      id: 010-bronze-company-concept-raw-create
+      author: dark417
+      changes:
+        - createTable:
+            catalogName: fin
+            schemaName: bronze
+            tableName: company_concept_raw
+            columns:
+              - column: {name: cik, type: STRING}
+              - column: {name: taxonomy, type: STRING}
+              - column: {name: concept, type: STRING}
+              - column: {name: payload_json, type: STRING}
+              - column: {name: _source_file, type: STRING, constraints: {nullable: false}}
+              - column: {name: _ingest_ts, type: TIMESTAMP, constraints: {nullable: false}}
+              - column: {name: _batch_id, type: STRING, constraints: {nullable: false}}
+              - column: {name: _logical_date, type: DATE, constraints: {nullable: false}}
+              - column: {name: _schema_version, type: STRING, constraints: {nullable: false}}
+              - column: {name: _rescued_data, type: STRING}
+      rollback:
+        - dropTable: {catalogName: fin, schemaName: bronze, tableName: company_concept_raw}

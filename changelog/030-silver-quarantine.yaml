@@ -1,0 +1,93 @@
+# Quarantine twins (data contracts §3.4): every source column nullable — a
+# quarantined row is by definition malformed — plus the four DQ columns.
+databaseChangeLog:
+  - changeSet:
+      id: 030-silver-filing-quarantine-create
+      author: dark417
+      changes:
+        - createTable:
+            catalogName: fin
+            schemaName: silver
+            tableName: filing_quarantine
+            columns:
+              - column: {name: accession_number, type: STRING}
+              - column: {name: cik, type: STRING}
+              - column: {name: company_name, type: STRING}
+              - column: {name: form_type, type: STRING}
+              - column: {name: base_form_type, type: STRING}
+              - column: {name: is_amendment, type: BOOLEAN}
+              - column: {name: filed_date, type: DATE}
+              - column: {name: source_file_name, type: STRING}
+              - column: {name: _first_seen_ts, type: TIMESTAMP}
+              - column: {name: _last_seen_ts, type: TIMESTAMP}
+              - column: {name: _batch_id, type: STRING}
+              - column: {name: _dq_check_name, type: STRING, constraints: {nullable: false}}
+              - column: {name: _dq_failure_reason, type: STRING, constraints: {nullable: false}}
+              - column: {name: _dq_run_id, type: STRING, constraints: {nullable: false}}
+              - column: {name: _quarantined_at, type: TIMESTAMP, constraints: {nullable: false}}
+      rollback:
+        - dropTable: {catalogName: fin, schemaName: silver, tableName: filing_quarantine}
+
+  - changeSet:
+      id: 030-silver-company-quarantine-create
+      author: dark417
+      changes:
+        - createTable:
+            catalogName: fin
+            schemaName: silver
+            tableName: company_quarantine
+            columns:
+              - column: {name: cik, type: STRING}
+              - column: {name: name, type: STRING}
+              - column: {name: sic, type: STRING}
+              - column: {name: sic_description, type: STRING}
+              - column: {name: state_of_incorporation, type: STRING}
+              - column: {name: fiscal_year_end, type: STRING}
+              - column: {name: tickers, type: ARRAY<STRING>}
+              - column: {name: exchanges, type: ARRAY<STRING>}
+              - column: {name: _hash_diff, type: STRING}
+              - column: {name: valid_from, type: DATE}
+              - column: {name: valid_to, type: DATE}
+              - column: {name: is_current, type: BOOLEAN}
+              - column: {name: _first_seen_ts, type: TIMESTAMP}
+              - column: {name: _last_seen_ts, type: TIMESTAMP}
+              - column: {name: _batch_id, type: STRING}
+              - column: {name: _dq_check_name, type: STRING, constraints: {nullable: false}}
+              - column: {name: _dq_failure_reason, type: STRING, constraints: {nullable: false}}
+              - column: {name: _dq_run_id, type: STRING, constraints: {nullable: false}}
+              - column: {name: _quarantined_at, type: TIMESTAMP, constraints: {nullable: false}}
+      rollback:
+        - dropTable: {catalogName: fin, schemaName: silver, tableName: company_quarantine}
+
+  - changeSet:
+      id: 030-silver-financial-fact-quarantine-create
+      author: dark417
+      changes:
+        - createTable:
+            catalogName: fin
+            schemaName: silver
+            tableName: financial_fact_quarantine
+            columns:
+              - column: {name: cik, type: STRING}
+              - column: {name: taxonomy, type: STRING}
+              - column: {name: concept, type: STRING}
+              - column: {name: concept_canonical, type: STRING}
+              - column: {name: unit, type: STRING}
+              - column: {name: value, type: "DECIMAL(38,6)"}
+              - column: {name: period_start, type: DATE}
+              - column: {name: period_end, type: DATE}
+              - column: {name: period_type, type: STRING}
+              - column: {name: fy, type: STRING}
+              - column: {name: fp, type: STRING}
+              - column: {name: form, type: STRING}
+              - column: {name: accession_number, type: STRING}
+              - column: {name: filed_date, type: DATE}
+              - column: {name: _first_seen_ts, type: TIMESTAMP}
+              - column: {name: _last_seen_ts, type: TIMESTAMP}
+              - column: {name: _batch_id, type: STRING}
+              - column: {name: _dq_check_name, type: STRING, constraints: {nullable: false}}
+              - column: {name: _dq_failure_reason, type: STRING, constraints: {nullable: false}}
+              - column: {name: _dq_run_id, type: STRING, constraints: {nullable: false}}
+              - column: {name: _quarantined_at, type: TIMESTAMP, constraints: {nullable: false}}
+      rollback:
+        - dropTable: {catalogName: fin, schemaName: silver, tableName: financial_fact_quarantine}

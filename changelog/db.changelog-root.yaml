@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - include:
+      file: 001-schemas-bootstrap.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 010-bronze.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 020-silver.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 030-silver-quarantine.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 040-gold.yaml
+      relativeToChangelogFile: true

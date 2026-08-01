@@ -1,0 +1,101 @@
+# Gold marts (data contracts §4). No createIndex anywhere — unsupported by the
+# Databricks extension; use changeClusterColumns if clustering is ever wanted.
+databaseChangeLog:
+  - changeSet:
+      id: 040-gold-financials-current-create
+      author: dark417
+      changes:
+        - createTable:
+            catalogName: fin
+            schemaName: gold
+            tableName: financials_current
+            columns:
+              - column: {name: cik, type: STRING, constraints: {nullable: false}}
+              - column: {name: concept, type: STRING, constraints: {nullable: false}}
+              - column: {name: concept_canonical, type: STRING}
+              - column: {name: unit, type: STRING, constraints: {nullable: false}}
+              - column: {name: value, type: "DECIMAL(38,6)", constraints: {nullable: false}}
+              - column: {name: period_start, type: DATE}
+              - column: {name: period_end, type: DATE, constraints: {nullable: false}}
+              - column: {name: period_type, type: STRING, constraints: {nullable: false}}
+              - column: {name: fy, type: STRING}
+              - column: {name: fp, type: STRING}
+              - column: {name: accession_number, type: STRING, constraints: {nullable: false}}
+              - column: {name: filed_date, type: DATE, constraints: {nullable: false}}
+              - column: {name: is_restated, type: BOOLEAN, constraints: {nullable: false}}
+              - column: {name: _updated_ts, type: TIMESTAMP, constraints: {nullable: false}}
+      rollback:
+        - dropTable: {catalogName: fin, schemaName: gold, tableName: financials_current}
+
+  - changeSet:
+      id: 040-gold-restatement-event-create
+      author: dark417
+      changes:
+        - createTable:
+            catalogName: fin
+            schemaName: gold
+            tableName: restatement_event
+            columns:
+              - column: {name: event_id, type: STRING, constraints: {nullable: false}}
+              - column: {name: cik, type: STRING, constraints: {nullable: false}}
+              - column: {name: concept, type: STRING, constraints: {nullable: false}}
+              - column: {name: concept_canonical, type: STRING}
+              - column: {name: unit, type: STRING, constraints: {nullable: false}}
+              - column: {name: period_start, type: DATE}
+              - column: {name: period_end, type: DATE, constraints: {nullable: false}}
+              - column: {name: period_type, type: STRING, constraints: {nullable: false}}
+              - column: {name: original_accession, type: STRING, constraints: {nullable: false}}
+              - column: {name: original_filed_date, type: DATE, constraints: {nullable: false}}
+              - column: {name: original_value, type: "DECIMAL(38,6)", constraints: {nullable: false}}
+              - column: {name: restated_accession, type: STRING, constraints: {nullable: false}}
+              - column: {name: restated_filed_date, type: DATE, constraints: {nullable: false}}
+              - column: {name: restated_value, type: "DECIMAL(38,6)", constraints: {nullable: false}}
+              - column: {name: delta_value, type: "DECIMAL(38,6)", constraints: {nullable: false}}
+              - column: {name: delta_pct, type: DOUBLE}
+              - column: {name: days_to_restatement, type: INT, constraints: {nullable: false}}
+              - column: {name: materiality_band, type: STRING, constraints: {nullable: false}}
+              - column: {name: detected_ts, type: TIMESTAMP, constraints: {nullable: false}}
+      rollback:
+        - dropTable: {catalogName: fin, schemaName: gold, tableName: restatement_event}
+
+  - changeSet:
+      id: 040-gold-filing-activity-daily-create
+      author: dark417
+      changes:
+        - createTable:
+            catalogName: fin
+            schemaName: gold
+            tableName: filing_activity_daily
+            columns:
+              - column: {name: filed_date, type: DATE, constraints: {nullable: false}}
+              - column: {name: base_form_type, type: STRING, constraints: {nullable: false}}
+              - column: {name: filing_count, type: BIGINT, constraints: {nullable: false}}
+              - column: {name: amendment_count, type: BIGINT, constraints: {nullable: false}}
+              - column: {name: distinct_ciks, type: BIGINT, constraints: {nullable: false}}
+              - column: {name: _updated_ts, type: TIMESTAMP, constraints: {nullable: false}}
+      rollback:
+        - dropTable: {catalogName: fin, schemaName: gold, tableName: filing_activity_daily}
+
+  - changeSet:
+      id: 040-gold-company-profile-create
+      author: dark417
+      changes:
+        - createTable:
+            catalogName: fin
+            schemaName: gold
+            tableName: company_profile
+            columns:
+              - column: {name: cik, type: STRING, constraints: {nullable: false}}
+              - column: {name: name, type: STRING, constraints: {nullable: false}}
+              - column: {name: tickers, type: ARRAY<STRING>}
+              - column: {name: exchanges, type: ARRAY<STRING>}
+              - column: {name: sic, type: STRING}
+              - column: {name: sic_description, type: STRING}
+              - column: {name: state_of_incorporation, type: STRING}
+              - column: {name: first_filing_date, type: DATE}
+              - column: {name: latest_filing_date, type: DATE}
+              - column: {name: filing_count, type: BIGINT, constraints: {nullable: false}}
+              - column: {name: restatement_count, type: BIGINT, constraints: {nullable: false}}
+              - column: {name: _updated_ts, type: TIMESTAMP, constraints: {nullable: false}}
+      rollback:
+        - dropTable: {catalogName: fin, schemaName: gold, tableName: company_profile}

@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Liquibase local config carries the PAT — never committed
+changelog/liquibase.properties

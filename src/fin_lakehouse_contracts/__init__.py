@@ -1,0 +1,9 @@
+"""Shared contract layer for the fin lakehouse.
+
+Pure description of shape: names, models, concepts, DQ registry, Spark schemas
+(lazy). No I/O of any kind lives in this package.
+"""
+
+__version__ = "0.1.0"
+
+__all__ = ["__version__"]

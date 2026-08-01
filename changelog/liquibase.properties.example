@@ -1,0 +1,6 @@
+# Copy to changelog/liquibase.properties (gitignored — the PAT never enters
+# the repo) and fill in the workspace host, warehouse id, and PAT.
+url=jdbc:databricks://<workspace-host>:443/default;transportMode=http;ssl=1;httpPath=/sql/1.0/warehouses/<warehouse-id>;ConnCatalog=fin;ConnSchema=default
+username=token
+password=<PAT>
+changeLogFile=changelog/db.changelog-root.yaml

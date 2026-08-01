@@ -1,0 +1,59 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fin-lakehouse-contracts"
+version = "0.1.0"
+description = "Shared contract layer for the fin lakehouse: schemas, names, DQ registry, Liquibase changelogs"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "Dark417" }]
+dependencies = [
+    "pydantic>=2.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pyspark>=3.5",
+    "delta-spark>=3.2",
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.5",
+    "mypy>=1.10",
+    "pyyaml>=6.0",
+    "types-PyYAML",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fin_lakehouse_contracts"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+strict = true
+python_version = "3.11"
+mypy_path = "src"
+packages = ["fin_lakehouse_contracts"]
+
+[[tool.mypy.overrides]]
+module = "pyspark.*"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "spark: tests that build a SparkSession (slow; run separately)",
+]
+addopts = "-q"
+
+[tool.coverage.run]
+source = ["src/fin_lakehouse_contracts"]
+omit = ["src/fin_lakehouse_contracts/spark/*"]
