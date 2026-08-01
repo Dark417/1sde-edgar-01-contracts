@@ -25,7 +25,9 @@ facts. Nothing else compiles until this is published.
 
 Authoritative background: [design doc](docs/00-design-doc.md) ·
 [data contracts](docs/02-data-contracts.md) ·
-[migration policy](docs/MIGRATION.md)
+[migration policy](docs/MIGRATION.md) ·
+**[RUNBOOK](docs/RUNBOOK.md)** (run locally, Liquibase offline/online, connect
+to your workspace)
 
 ## Layout
 

@@ -219,3 +219,6 @@ __marimo__/
 
 # Liquibase local config carries the PAT — never committed
 changelog/liquibase.properties
+
+# local liquibase jars (extension + JDBC driver)
+tools/
