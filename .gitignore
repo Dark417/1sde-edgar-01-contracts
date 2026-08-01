@@ -222,3 +222,6 @@ changelog/liquibase.properties
 
 # local liquibase jars (extension + JDBC driver)
 tools/
+
+# offline-mode liquibase state file (local artifact)
+databasechangelog.csv
