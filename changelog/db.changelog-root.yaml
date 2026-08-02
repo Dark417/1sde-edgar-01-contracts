@@ -17,3 +17,12 @@ databaseChangeLog:
   - include:
       file: 050-realign-v1.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 060-versioning-and-keys.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 070-gold-views.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 080-clustering.yaml
+      relativeToChangelogFile: true
