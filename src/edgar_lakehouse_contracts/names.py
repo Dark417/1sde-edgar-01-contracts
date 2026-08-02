@@ -77,6 +77,7 @@ def ssm_oidc_role_arn(repo: str) -> str:
     """
     return f"{SSM_PREFIX}/iam/oidc_role_arn/{repo}"
 
+
 _ACCESSION_CANONICAL: Final[re.Pattern[str]] = re.compile(r"^\d{10}-\d{2}-\d{6}$")
 _ACCESSION_BARE: Final[re.Pattern[str]] = re.compile(r"^\d{18}$")
 
