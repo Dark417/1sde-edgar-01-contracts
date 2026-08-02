@@ -56,12 +56,31 @@ jobs:
           changelogFile: changelog/db.changelog-root.yaml
           url: "offline:databricks"
 
-  publish:
+  # One environment: the tag IS the release button. DDL applies before the wheel
+  # publishes so no consumer can ever install a version whose tables don't exist.
+  # `update` is idempotent (append-only changesets; re-run = no-op) and the
+  # concurrency group serializes overlapping tag pushes.
+  apply-ddl:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: build
     runs-on: ubuntu-latest
+    concurrency: liquibase-apply
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Liquibase update against the workspace
+        uses: liquibase-github-actions/update@v4.32.0
+        with:
+          changelogFile: changelog/db.changelog-root.yaml
+          url: "jdbc:databricks://${{ secrets.DBX_HOST }}:443/default;transportMode=http;ssl=1;httpPath=${{ secrets.DBX_HTTP_PATH }};ConnCatalog=edgar;ConnSchema=default"
+          username: token
+          password: ${{ secrets.DBX_PAT }}
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: apply-ddl
+    runs-on: ubuntu-latest
     permissions:
-      id-token: write # OIDC to AWS — role from repo 2; no long-lived keys
       contents: write # gh release
     steps:
       - uses: actions/checkout@v4
