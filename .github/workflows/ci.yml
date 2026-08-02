@@ -6,6 +6,15 @@ on:
     tags: ["v*"]
   pull_request:
 
+env:
+  # us-east-2 is not a preference, it is where the Unity Catalog metastore lives.
+  # Verified live: `databricks metastores get` returns region us-east-2 and
+  # global_metastore_id aws:us-east-2:083f6670-cb9a-4058-9fd5-ed2fd09b1f15. A
+  # workspace can only attach to the metastore in its own region, so every bucket
+  # this project touches belongs here too -- anywhere else is cross-region egress
+  # on every single read. Do not "fix" this to another region.
+  AWS_REGION: us-east-2
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -66,15 +75,11 @@ jobs:
           pip install build
           python -m build
 
-      - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
-          aws-region: us-east-1
-
-      - name: Upload wheel to the wheels prefix
-        run: aws s3 cp dist/*.whl "s3://${{ secrets.TF_BUCKET }}/wheels/"
-
+      # The release below IS the distribution channel. There was an `aws s3 cp` here
+      # that pushed the wheel to "s3://$TF_BUCKET/wheels/" -- the Terraform *state*
+      # bucket, which is not a package index and which no consumer ever read. Repo 3
+      # reads the release asset; repo 4 uses its own in-repo mirror. Removed rather
+      # than retargeted: one publishing channel, not two that can disagree.
       - name: GitHub release with wheel attached
         env:
           GH_TOKEN: ${{ github.token }}
