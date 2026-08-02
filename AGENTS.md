@@ -422,7 +422,17 @@ migrates tables, not catalogs. Expected first-time failure if you skip that:
 Chicken-and-egg resolution: run repo 2's `terraform apply` for the catalog/schema
 resources first, then come back here.
 
-### 9.7 Publish v0.1.0 by hand (before repo 2 CI exists)
+### 9.7 Publishing — now automated, kept for history
+
+Releases are cut by pushing a `v*` tag: CI runs the gates, applies the DDL over
+JDBC, then builds the wheel and attaches it to the GitHub release. The manual
+recipe below is what was done for v0.1.0 before that pipeline existed. The S3
+`wheels/` prefix is no longer a distribution channel — the repos are public, so
+the release asset is the channel (one channel, not two that can disagree).
+
+Current release: **v1.0.0**, `CONTRACTS_VERSION=1.0.0`.
+
+<details><summary>historical manual steps</summary>
 The target bucket is created by repo 2 §9.1's hand bootstrap — run that first. It is
 a by-hand step and does not require repo 2's Terraform to exist yet.
 ```bash
@@ -435,8 +445,9 @@ git tag v0.1.0 && git push --tags
 ### 9.8 Record the published version
 Every downstream repo pins this exact string. Write it down:
 ```
-CONTRACTS_VERSION=0.1.0
+CONTRACTS_VERSION=1.0.0
 ```
+</details>
 
 ---
 
@@ -467,7 +478,7 @@ CONTRACTS_VERSION=0.1.0
 - [ ] Drift test fails when a changelog type is deliberately broken
 - [ ] Every `DQCheck.prevents` names a real failure
 - [ ] ADR-001 and ADR-002 filled in, not templates
-- [ ] `v0.1.0` tagged, wheel published, `CONTRACTS_VERSION` recorded
+- [ ] `v1.0.0` tagged, wheel published, `CONTRACTS_VERSION` recorded
 
 ---
 

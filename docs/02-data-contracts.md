@@ -371,7 +371,7 @@ s3://{serving_bucket}/v1/_manifest.json
 ```json
 {
   "generated_at": "2026-07-30T06:41:02Z",
-  "contracts_version": "0.1.0",
+  "contracts_version": "1.0.0",
   "gold_max_filed_date": "2026-07-29",
   "row_counts": {
     "financials_current": 41250,
