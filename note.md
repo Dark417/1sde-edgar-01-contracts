@@ -7,7 +7,7 @@
 
 | Repo | State |
 |---|---|
-| 01-contracts | **Done** except wheel publish + ADR-001 (both blocked on AWS bootstrap). CI green, 100% cov, schema live in workspace. |
+| 01-contracts | **DONE & RELEASED: v0.1.0**, wheel on the GitHub release (public repo = the registry stand-in; S3 plan dropped). Release-on-tag pipeline: build -> liquibase update (CI, idempotent) -> publish. Only ADR-001 probe remains (needs raw bucket). |
 | 02-infra | Terraform on `main` (`d53aad5`), not yet applied. Needs §9 hand bootstrap: state bucket, 2 secrets, budget alarm → `plan`/`apply` → `imports.tf` adopts hand-created catalog. |
 | 03-ingest / 04-pipelines / 05-serving | AGENTS.md specs only; not generated. |
 | Databricks | Catalog `edgar` + 4 schemas + volume + 13 tables, Liquibase 14/14 changesets, idempotency verified. `fin` dropped. Host `dbc-6e85f573-bc49`, warehouse `733dc896c4c3751c`. |
@@ -39,8 +39,10 @@
 
 1. **AWS §9.1 bootstrap** (human or either session, profile `edgar`): tfstate bucket `edgar-lakehouse-tfstate-806168459926` + DynamoDB lock, the two secrets (with a **fresh, rotated PAT**), $10 budget alarm.
 2. **Repo 2 `terraform plan` → hand-check → `apply`**, with `imports.tf` adopting the hand-created catalog/schemas/volume. Verify: schedule DISABLED, zero destroys, no plaintext secrets in plan.
-3. **Close out contracts**: publish wheel to `s3://<tf-bucket>/wheels/`, tag `v0.1.0`, record `CONTRACTS_VERSION=0.1.0`; run the ADR-001 probe (`dbutils.fs.ls("s3://edgar-lake-raw/")`) and fill the ADR (`s3` vs `volume`; default stays `volume` until probed).
+3. ~~Publish wheel~~ DONE: CONTRACTS_VERSION=0.1.0, install URL: https://github.com/Dark417/1sde-edgar-01-contracts/releases/download/v0.1.0/edgar_lakehouse_contracts-0.1.0-py3-none-any.whl . Still open: run the ADR-001 probe (`dbutils.fs.ls("s3://edgar-lake-raw/")`) and fill the ADR (`s3` vs `volume`; default stays `volume` until probed).
 4. **Generate repo 3 (ingest)** — needs a hand-collected `.idx` fixture (spec §9.3) and the SEC user-agent secret.
 5. **Bucket-name reality check**: `edgar-lake-raw`/`-serving` are global-namespace S3 names and may be taken → repo 2 may suffix with the account id; contracts is immune (bucket is a parameter, constants are defaults).
 6. **Scale question for the interview**: stay on the 500-CIK REST fan-out; answer scaling verbally (XBRL `frames` ≈ 6k filers/request; DERA bulk ZIPs ≈ 300M facts) — same contracts either way.
 7. Weekly ops once live: click the demo link, check `_manifest.json` freshness; rotate PAT every 90 days.
+
+- **Release process (2026-08-02):** one env, so tag = release button. Merge to main only validates; `v*` tag runs build -> `liquibase update` -> wheel to GitHub release, in that order (DDL lands before the version is installable). Gotchas hit: liquibase GH action lacks the Simba JDBC driver (install CLI+jars directly); Git Bash mangles leading-slash secrets (`MSYS_NO_PATHCONV=1 gh secret set ...`). Repo 4 must now swap its vendored contracts copy for the ==0.1.0 pin.
