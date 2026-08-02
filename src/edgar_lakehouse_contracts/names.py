@@ -22,6 +22,61 @@ RAW_BUCKET_DEFAULT: Final[str] = "edgar-lake-raw"
 SERVING_BUCKET_DEFAULT: Final[str] = "edgar-lake-serving"
 VOLUME_LANDING: Final[str] = "/Volumes/edgar/landing/edgar"
 
+# ---------------------------------------------------------------------------
+# SSM Parameter Store keys — the cross-repo config interface.
+#
+# These live here because nothing owned them before, and it showed. Repo 2
+# published ``/edgar-lakehouse/dbx/volume_path``; repo 3 read that name; repo 4
+# independently invented ``/edgar-lakehouse/dbx/landing_volume`` for the same
+# value and read a key that was never published. Nothing failed loudly, because
+# repo 4's config falls back to a default when the lookup misses — so the two
+# repos simply disagreed in silence.
+#
+# A parameter name is a name, which makes it this module's business exactly like
+# the catalog and bucket names above. Producer and consumers now import one
+# constant instead of each spelling it out.
+#
+# Adding a constant breaks nobody: repos adopt these on their next version bump
+# rather than all at once.
+# ---------------------------------------------------------------------------
+SSM_PREFIX: Final[str] = "/edgar-lakehouse"
+
+SSM_DBX_HOST: Final[str] = f"{SSM_PREFIX}/dbx/host"
+SSM_DBX_VOLUME_PATH: Final[str] = f"{SSM_PREFIX}/dbx/volume_path"
+SSM_DBX_WAREHOUSE_ID: Final[str] = f"{SSM_PREFIX}/dbx/warehouse_id"
+SSM_S3_RAW_BUCKET: Final[str] = f"{SSM_PREFIX}/s3/raw_bucket"
+SSM_S3_SERVING_BUCKET: Final[str] = f"{SSM_PREFIX}/s3/serving_bucket"
+SSM_ECR_INGEST_REPO: Final[str] = f"{SSM_PREFIX}/ecr/ingest_repo"
+SSM_ECS_TASK_FAMILY: Final[str] = f"{SSM_PREFIX}/ecs/task_family"
+SSM_CONTRACTS_VERSION: Final[str] = f"{SSM_PREFIX}/contracts/version"
+SSM_LANDING_MODE: Final[str] = f"{SSM_PREFIX}/landing_mode"
+
+#: Every key repo 2 publishes. Repo 2 asserts it publishes exactly this set, so
+#: a key added here without a publisher — or published without being declared —
+#: fails that repo's build instead of surfacing as a runtime ParameterNotFound.
+SSM_PUBLISHED: Final[frozenset[str]] = frozenset(
+    {
+        SSM_DBX_HOST,
+        SSM_DBX_VOLUME_PATH,
+        SSM_DBX_WAREHOUSE_ID,
+        SSM_S3_RAW_BUCKET,
+        SSM_S3_SERVING_BUCKET,
+        SSM_ECR_INGEST_REPO,
+        SSM_ECS_TASK_FAMILY,
+        SSM_CONTRACTS_VERSION,
+        SSM_LANDING_MODE,
+    }
+)
+
+
+def ssm_oidc_role_arn(repo: str) -> str:
+    """Return the SSM key holding *repo*'s GitHub Actions OIDC role ARN.
+
+    Per-repo rather than a constant, since the set of repos changes. Does not
+    handle: checking the parameter exists, or that the repo is one of the five.
+    """
+    return f"{SSM_PREFIX}/iam/oidc_role_arn/{repo}"
+
 _ACCESSION_CANONICAL: Final[re.Pattern[str]] = re.compile(r"^\d{10}-\d{2}-\d{6}$")
 _ACCESSION_BARE: Final[re.Pattern[str]] = re.compile(r"^\d{18}$")
 
