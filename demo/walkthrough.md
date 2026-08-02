@@ -40,7 +40,7 @@ DQCheck(
     severity="reject",
     expression="period_start IS NULL OR period_end >= period_start",
     prevents="Negative-length duration periods poisoning period-scoped "
-             "comparisons (instant facts pass by design)",
+    "comparisons (instant facts pass by design)",
 )
 ```
 
