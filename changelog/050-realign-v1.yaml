@@ -1,0 +1,434 @@
+# v1.0.0 realignment -- the contract adopts the shape its consumer actually reads.
+#
+# The v0.1.0 tables were written before repo 4 existed and disagreed with it on
+# nearly every table: metadata columns had different names (_batch_id vs
+# _ingest_batch_id, _schema_version vs _envelope_version), bronze was missing the
+# provenance columns the landing envelope now carries, silver.financial_fact was
+# missing `decimals` (which is what makes rounding-only restatements detectable),
+# and quarantine used a per-table mirror instead of one generic record_json shape.
+#
+# Auto Loader routes unknown fields into _rescued_data rather than failing, so the
+# mismatch would have produced silently NULL columns, not an error.
+#
+# Drop-and-recreate rather than ALTER: every table was verified empty (0 rows
+# across all 13) before this changeset was written, and Delta RENAME COLUMN needs
+# column-mapping mode enabled. Rollback drops the new table; the v0.1.0 shape is
+# recoverable by checking out tag v0.1.0 and running its changelog.
+databaseChangeLog:
+
+  - changeSet:
+      id: 050-realign-bronze-filing_index_raw
+      author: dark417
+      comment: >-
+        Replace bronze.filing_index_raw with the consumer-verified v1.0.0 shape.
+      changes:
+        - dropTable:
+            catalogName: edgar
+            schemaName: bronze
+            tableName: filing_index_raw
+        - createTable:
+            catalogName: edgar
+            schemaName: bronze
+            tableName: filing_index_raw
+            columns:
+              - column: {name: logical_date, type: DATE, constraints: {nullable: false}}
+              - column: {name: resource_id, type: STRING}
+              - column: {name: fetched_at, type: TIMESTAMP}
+              - column: {name: form_type, type: STRING}
+              - column: {name: company_name, type: STRING}
+              - column: {name: cik, type: STRING}
+              - column: {name: date_filed, type: STRING}
+              - column: {name: accession_number, type: STRING}
+              - column: {name: file_name, type: STRING}
+              - column: {name: _ingest_batch_id, type: STRING, constraints: {nullable: false}}
+              - column: {name: _ingest_ts, type: TIMESTAMP, constraints: {nullable: false}}
+              - column: {name: _source_file, type: STRING, constraints: {nullable: false}}
+              - column: {name: _source_system, type: STRING, constraints: {nullable: false}}
+              - column: {name: _envelope_version, type: STRING, constraints: {nullable: false}}
+              - column: {name: _rescued_data, type: STRING}
+      rollback:
+        - dropTable: {catalogName: edgar, schemaName: bronze, tableName: filing_index_raw}
+
+  - changeSet:
+      id: 050-realign-bronze-company_submissions_raw
+      author: dark417
+      comment: >-
+        Replace bronze.company_submissions_raw with the consumer-verified v1.0.0 shape.
+      changes:
+        - dropTable:
+            catalogName: edgar
+            schemaName: bronze
+            tableName: company_submissions_raw
+        - createTable:
+            catalogName: edgar
+            schemaName: bronze
+            tableName: company_submissions_raw
+            columns:
+              - column: {name: logical_date, type: DATE, constraints: {nullable: false}}
+              - column: {name: resource_id, type: STRING}
+              - column: {name: fetched_at, type: TIMESTAMP}
+              - column: {name: cik, type: STRING}
+              - column: {name: payload_json, type: STRING}
+              - column: {name: _ingest_batch_id, type: STRING, constraints: {nullable: false}}
+              - column: {name: _ingest_ts, type: TIMESTAMP, constraints: {nullable: false}}
+              - column: {name: _source_file, type: STRING, constraints: {nullable: false}}
+              - column: {name: _source_system, type: STRING, constraints: {nullable: false}}
+              - column: {name: _envelope_version, type: STRING, constraints: {nullable: false}}
+              - column: {name: _rescued_data, type: STRING}
+      rollback:
+        - dropTable: {catalogName: edgar, schemaName: bronze, tableName: company_submissions_raw}
+
+  - changeSet:
+      id: 050-realign-bronze-company_concept_raw
+      author: dark417
+      comment: >-
+        Replace bronze.company_concept_raw with the consumer-verified v1.0.0 shape.
+      changes:
+        - dropTable:
+            catalogName: edgar
+            schemaName: bronze
+            tableName: company_concept_raw
+        - createTable:
+            catalogName: edgar
+            schemaName: bronze
+            tableName: company_concept_raw
+            columns:
+              - column: {name: logical_date, type: DATE, constraints: {nullable: false}}
+              - column: {name: resource_id, type: STRING}
+              - column: {name: fetched_at, type: TIMESTAMP}
+              - column: {name: cik, type: STRING}
+              - column: {name: taxonomy, type: STRING}
+              - column: {name: tag, type: STRING}
+              - column: {name: payload_json, type: STRING}
+              - column: {name: _ingest_batch_id, type: STRING, constraints: {nullable: false}}
+              - column: {name: _ingest_ts, type: TIMESTAMP, constraints: {nullable: false}}
+              - column: {name: _source_file, type: STRING, constraints: {nullable: false}}
+              - column: {name: _source_system, type: STRING, constraints: {nullable: false}}
+              - column: {name: _envelope_version, type: STRING, constraints: {nullable: false}}
+              - column: {name: _rescued_data, type: STRING}
+      rollback:
+        - dropTable: {catalogName: edgar, schemaName: bronze, tableName: company_concept_raw}
+
+  - changeSet:
+      id: 050-realign-silver-filing
+      author: dark417
+      comment: >-
+        Replace silver.filing with the consumer-verified v1.0.0 shape.
+      changes:
+        - dropTable:
+            catalogName: edgar
+            schemaName: silver
+            tableName: filing
+        - createTable:
+            catalogName: edgar
+            schemaName: silver
+            tableName: filing
+            columns:
+              - column: {name: accession_number, type: STRING, constraints: {nullable: false}}
+              - column: {name: cik, type: STRING, constraints: {nullable: false}}
+              - column: {name: company_name, type: STRING}
+              - column: {name: form_type, type: STRING, constraints: {nullable: false}}
+              - column: {name: base_form_type, type: STRING, constraints: {nullable: false}}
+              - column: {name: is_amendment, type: BOOLEAN, constraints: {nullable: false}}
+              - column: {name: filed_date, type: DATE, constraints: {nullable: false}}
+              - column: {name: primary_doc_url, type: STRING}
+              - column: {name: logical_date, type: DATE, constraints: {nullable: false}}
+              - column: {name: _first_seen_ts, type: TIMESTAMP, constraints: {nullable: false}}
+              - column: {name: _last_seen_ts, type: TIMESTAMP, constraints: {nullable: false}}
+              - column: {name: _ingest_batch_id, type: STRING, constraints: {nullable: false}}
+              - column: {name: _source_file, type: STRING}
+      rollback:
+        - dropTable: {catalogName: edgar, schemaName: silver, tableName: filing}
+
+  - changeSet:
+      id: 050-realign-silver-company
+      author: dark417
+      comment: >-
+        Replace silver.company with the consumer-verified v1.0.0 shape.
+      changes:
+        - dropTable:
+            catalogName: edgar
+            schemaName: silver
+            tableName: company
+        - createTable:
+            catalogName: edgar
+            schemaName: silver
+            tableName: company
+            columns:
+              - column: {name: cik, type: STRING, constraints: {nullable: false}}
+              - column: {name: company_name, type: STRING}
+              - column: {name: sic, type: STRING}
+              - column: {name: sic_description, type: STRING}
+              - column: {name: ein, type: STRING}
+              - column: {name: entity_type, type: STRING}
+              - column: {name: state_of_incorporation, type: STRING}
+              - column: {name: fiscal_year_end, type: STRING}
+              - column: {name: tickers, type: "ARRAY<STRING>"}
+              - column: {name: exchanges, type: "ARRAY<STRING>"}
+              - column: {name: former_names, type: "ARRAY<STRING>"}
+              - column: {name: valid_from, type: DATE, constraints: {nullable: false}}
+              - column: {name: valid_to, type: DATE}
+              - column: {name: is_current, type: BOOLEAN, constraints: {nullable: false}}
+              - column: {name: _hash_diff, type: STRING, constraints: {nullable: false}}
+              - column: {name: _first_seen_ts, type: TIMESTAMP, constraints: {nullable: false}}
+              - column: {name: _last_seen_ts, type: TIMESTAMP, constraints: {nullable: false}}
+              - column: {name: _ingest_batch_id, type: STRING, constraints: {nullable: false}}
+              - column: {name: _source_file, type: STRING}
+      rollback:
+        - dropTable: {catalogName: edgar, schemaName: silver, tableName: company}
+
+  - changeSet:
+      id: 050-realign-silver-financial_fact
+      author: dark417
+      comment: >-
+        Replace silver.financial_fact with the consumer-verified v1.0.0 shape.
+      changes:
+        - dropTable:
+            catalogName: edgar
+            schemaName: silver
+            tableName: financial_fact
+        - createTable:
+            catalogName: edgar
+            schemaName: silver
+            tableName: financial_fact
+            columns:
+              - column: {name: cik, type: STRING, constraints: {nullable: false}}
+              - column: {name: taxonomy, type: STRING, constraints: {nullable: false}}
+              - column: {name: concept_tag, type: STRING, constraints: {nullable: false}}
+              - column: {name: concept_canonical, type: STRING}
+              - column: {name: unit, type: STRING, constraints: {nullable: false}}
+              - column: {name: period_start, type: DATE}
+              - column: {name: period_end, type: DATE, constraints: {nullable: false}}
+              - column: {name: period_type, type: STRING, constraints: {nullable: false}}
+              - column: {name: accession_number, type: STRING, constraints: {nullable: false}}
+              - column: {name: value, type: "DECIMAL(38,6)"}
+              - column: {name: decimals, type: INT}
+              - column: {name: fiscal_year, type: INT}
+              - column: {name: fiscal_period, type: STRING}
+              - column: {name: form_type, type: STRING}
+              - column: {name: filed_date, type: DATE, constraints: {nullable: false}}
+              - column: {name: frame, type: STRING}
+              - column: {name: logical_date, type: DATE, constraints: {nullable: false}}
+              - column: {name: _first_seen_ts, type: TIMESTAMP, constraints: {nullable: false}}
+              - column: {name: _last_seen_ts, type: TIMESTAMP, constraints: {nullable: false}}
+              - column: {name: _ingest_batch_id, type: STRING, constraints: {nullable: false}}
+              - column: {name: _source_file, type: STRING}
+      rollback:
+        - dropTable: {catalogName: edgar, schemaName: silver, tableName: financial_fact}
+
+  - changeSet:
+      id: 050-realign-silver-filing_quarantine
+      author: dark417
+      comment: >-
+        Replace silver.filing_quarantine with the consumer-verified v1.0.0 shape.
+      changes:
+        - dropTable:
+            catalogName: edgar
+            schemaName: silver
+            tableName: filing_quarantine
+        - createTable:
+            catalogName: edgar
+            schemaName: silver
+            tableName: filing_quarantine
+            columns:
+              - column: {name: _dq_record_id, type: STRING, constraints: {nullable: false}}
+              - column: {name: _dq_run_id, type: STRING, constraints: {nullable: false}}
+              - column: {name: _dq_check_name, type: STRING, constraints: {nullable: false}}
+              - column: {name: _dq_failure_reason, type: STRING, constraints: {nullable: false}}
+              - column: {name: _quarantined_at, type: TIMESTAMP, constraints: {nullable: false}}
+              - column: {name: _source_table, type: STRING, constraints: {nullable: false}}
+              - column: {name: _source_file, type: STRING}
+              - column: {name: _ingest_batch_id, type: STRING}
+              - column: {name: record_json, type: STRING, constraints: {nullable: false}}
+      rollback:
+        - dropTable: {catalogName: edgar, schemaName: silver, tableName: filing_quarantine}
+
+  - changeSet:
+      id: 050-realign-silver-company_quarantine
+      author: dark417
+      comment: >-
+        Replace silver.company_quarantine with the consumer-verified v1.0.0 shape.
+      changes:
+        - dropTable:
+            catalogName: edgar
+            schemaName: silver
+            tableName: company_quarantine
+        - createTable:
+            catalogName: edgar
+            schemaName: silver
+            tableName: company_quarantine
+            columns:
+              - column: {name: _dq_record_id, type: STRING, constraints: {nullable: false}}
+              - column: {name: _dq_run_id, type: STRING, constraints: {nullable: false}}
+              - column: {name: _dq_check_name, type: STRING, constraints: {nullable: false}}
+              - column: {name: _dq_failure_reason, type: STRING, constraints: {nullable: false}}
+              - column: {name: _quarantined_at, type: TIMESTAMP, constraints: {nullable: false}}
+              - column: {name: _source_table, type: STRING, constraints: {nullable: false}}
+              - column: {name: _source_file, type: STRING}
+              - column: {name: _ingest_batch_id, type: STRING}
+              - column: {name: record_json, type: STRING, constraints: {nullable: false}}
+      rollback:
+        - dropTable: {catalogName: edgar, schemaName: silver, tableName: company_quarantine}
+
+  - changeSet:
+      id: 050-realign-silver-financial_fact_quarantine
+      author: dark417
+      comment: >-
+        Replace silver.financial_fact_quarantine with the consumer-verified v1.0.0 shape.
+      changes:
+        - dropTable:
+            catalogName: edgar
+            schemaName: silver
+            tableName: financial_fact_quarantine
+        - createTable:
+            catalogName: edgar
+            schemaName: silver
+            tableName: financial_fact_quarantine
+            columns:
+              - column: {name: _dq_record_id, type: STRING, constraints: {nullable: false}}
+              - column: {name: _dq_run_id, type: STRING, constraints: {nullable: false}}
+              - column: {name: _dq_check_name, type: STRING, constraints: {nullable: false}}
+              - column: {name: _dq_failure_reason, type: STRING, constraints: {nullable: false}}
+              - column: {name: _quarantined_at, type: TIMESTAMP, constraints: {nullable: false}}
+              - column: {name: _source_table, type: STRING, constraints: {nullable: false}}
+              - column: {name: _source_file, type: STRING}
+              - column: {name: _ingest_batch_id, type: STRING}
+              - column: {name: record_json, type: STRING, constraints: {nullable: false}}
+      rollback:
+        - dropTable: {catalogName: edgar, schemaName: silver, tableName: financial_fact_quarantine}
+
+  - changeSet:
+      id: 050-realign-gold-financials_current
+      author: dark417
+      comment: >-
+        Replace gold.financials_current with the consumer-verified v1.0.0 shape.
+      changes:
+        - dropTable:
+            catalogName: edgar
+            schemaName: gold
+            tableName: financials_current
+        - createTable:
+            catalogName: edgar
+            schemaName: gold
+            tableName: financials_current
+            columns:
+              - column: {name: cik, type: STRING, constraints: {nullable: false}}
+              - column: {name: company_name, type: STRING}
+              - column: {name: concept_canonical, type: STRING, constraints: {nullable: false}}
+              - column: {name: unit, type: STRING, constraints: {nullable: false}}
+              - column: {name: period_start, type: DATE}
+              - column: {name: period_end, type: DATE, constraints: {nullable: false}}
+              - column: {name: period_type, type: STRING, constraints: {nullable: false}}
+              - column: {name: value, type: "DECIMAL(38,6)"}
+              - column: {name: decimals, type: INT}
+              - column: {name: fiscal_year, type: INT}
+              - column: {name: fiscal_period, type: STRING}
+              - column: {name: accession_number, type: STRING, constraints: {nullable: false}}
+              - column: {name: form_type, type: STRING}
+              - column: {name: filed_date, type: DATE, constraints: {nullable: false}}
+              - column: {name: assertion_count, type: INT, constraints: {nullable: false}}
+              - column: {name: was_restated, type: BOOLEAN, constraints: {nullable: false}}
+              - column: {name: _generated_at, type: TIMESTAMP, constraints: {nullable: false}}
+              - column: {name: _run_id, type: STRING, constraints: {nullable: false}}
+      rollback:
+        - dropTable: {catalogName: edgar, schemaName: gold, tableName: financials_current}
+
+  - changeSet:
+      id: 050-realign-gold-restatement_event
+      author: dark417
+      comment: >-
+        Replace gold.restatement_event with the consumer-verified v1.0.0 shape.
+      changes:
+        - dropTable:
+            catalogName: edgar
+            schemaName: gold
+            tableName: restatement_event
+        - createTable:
+            catalogName: edgar
+            schemaName: gold
+            tableName: restatement_event
+            columns:
+              - column: {name: restatement_id, type: STRING, constraints: {nullable: false}}
+              - column: {name: cik, type: STRING, constraints: {nullable: false}}
+              - column: {name: company_name, type: STRING}
+              - column: {name: concept_canonical, type: STRING, constraints: {nullable: false}}
+              - column: {name: unit, type: STRING, constraints: {nullable: false}}
+              - column: {name: period_start, type: DATE}
+              - column: {name: period_end, type: DATE, constraints: {nullable: false}}
+              - column: {name: period_type, type: STRING, constraints: {nullable: false}}
+              - column: {name: original_accession_number, type: STRING, constraints: {nullable: false}}
+              - column: {name: original_form_type, type: STRING}
+              - column: {name: original_filed_date, type: DATE, constraints: {nullable: false}}
+              - column: {name: original_value, type: "DECIMAL(38,6)", constraints: {nullable: false}}
+              - column: {name: original_decimals, type: INT}
+              - column: {name: restated_accession_number, type: STRING, constraints: {nullable: false}}
+              - column: {name: restated_form_type, type: STRING}
+              - column: {name: restated_filed_date, type: DATE, constraints: {nullable: false}}
+              - column: {name: restated_value, type: "DECIMAL(38,6)", constraints: {nullable: false}}
+              - column: {name: restated_decimals, type: INT}
+              - column: {name: delta_abs, type: "DECIMAL(38,6)", constraints: {nullable: false}}
+              - column: {name: delta_pct, type: DOUBLE}
+              - column: {name: materiality_band, type: STRING, constraints: {nullable: false}}
+              - column: {name: days_to_restatement, type: INT, constraints: {nullable: false}}
+              - column: {name: _generated_at, type: TIMESTAMP, constraints: {nullable: false}}
+              - column: {name: _run_id, type: STRING, constraints: {nullable: false}}
+      rollback:
+        - dropTable: {catalogName: edgar, schemaName: gold, tableName: restatement_event}
+
+  - changeSet:
+      id: 050-realign-gold-filing_activity_daily
+      author: dark417
+      comment: >-
+        Replace gold.filing_activity_daily with the consumer-verified v1.0.0 shape.
+      changes:
+        - dropTable:
+            catalogName: edgar
+            schemaName: gold
+            tableName: filing_activity_daily
+        - createTable:
+            catalogName: edgar
+            schemaName: gold
+            tableName: filing_activity_daily
+            columns:
+              - column: {name: filed_date, type: DATE, constraints: {nullable: false}}
+              - column: {name: base_form_type, type: STRING, constraints: {nullable: false}}
+              - column: {name: filing_count, type: INT, constraints: {nullable: false}}
+              - column: {name: amendment_count, type: INT, constraints: {nullable: false}}
+              - column: {name: distinct_cik_count, type: INT, constraints: {nullable: false}}
+              - column: {name: _generated_at, type: TIMESTAMP, constraints: {nullable: false}}
+              - column: {name: _run_id, type: STRING, constraints: {nullable: false}}
+      rollback:
+        - dropTable: {catalogName: edgar, schemaName: gold, tableName: filing_activity_daily}
+
+  - changeSet:
+      id: 050-realign-gold-company_profile
+      author: dark417
+      comment: >-
+        Replace gold.company_profile with the consumer-verified v1.0.0 shape.
+      changes:
+        - dropTable:
+            catalogName: edgar
+            schemaName: gold
+            tableName: company_profile
+        - createTable:
+            catalogName: edgar
+            schemaName: gold
+            tableName: company_profile
+            columns:
+              - column: {name: cik, type: STRING, constraints: {nullable: false}}
+              - column: {name: company_name, type: STRING}
+              - column: {name: sic, type: STRING}
+              - column: {name: sic_description, type: STRING}
+              - column: {name: entity_type, type: STRING}
+              - column: {name: state_of_incorporation, type: STRING}
+              - column: {name: fiscal_year_end, type: STRING}
+              - column: {name: tickers, type: "ARRAY<STRING>"}
+              - column: {name: exchanges, type: "ARRAY<STRING>"}
+              - column: {name: filing_count, type: INT, constraints: {nullable: false}}
+              - column: {name: first_filed_date, type: DATE}
+              - column: {name: last_filed_date, type: DATE}
+              - column: {name: restatement_count, type: INT, constraints: {nullable: false}}
+              - column: {name: _generated_at, type: TIMESTAMP, constraints: {nullable: false}}
+              - column: {name: _run_id, type: STRING, constraints: {nullable: false}}
+      rollback:
+        - dropTable: {catalogName: edgar, schemaName: gold, tableName: company_profile}

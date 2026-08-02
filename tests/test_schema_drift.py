@@ -19,9 +19,19 @@ from edgar_lakehouse_contracts.spark import schemas as spark_schemas
 
 REPO_ROOT = Path(__file__).parents[1]
 CHANGELOG_DIR = REPO_ROOT / "changelog"
-# Drift scope: bronze + silver (StructTypes exist for exactly those — gold is
-# created by Liquibase but no repo compiles Spark code against it, F-5).
-TABLE_CHANGELOGS = ("010-bronze.yaml", "020-silver.yaml", "030-silver-quarantine.yaml")
+# Drift scope: every table, gold included. Gold entered scope at v1.0.0 because
+# repo 4 builds those marts and compiles against their StructTypes.
+#
+# ORDER MATTERS. These are applied in changelog order and a later createTable
+# wins, which is how 050's drop-and-recreate is modelled: the effective schema is
+# the last CREATE for each table, exactly as Liquibase leaves the database.
+TABLE_CHANGELOGS = (
+    "010-bronze.yaml",
+    "020-silver.yaml",
+    "030-silver-quarantine.yaml",
+    "040-gold.yaml",
+    "050-realign-v1.yaml",
+)
 
 ColumnMap = dict[str, tuple[str, bool]]  # column -> (normalized type, nullable)
 

@@ -46,3 +46,26 @@ landing). Serving last (pure reader). Infra (repo 2) repins whenever the SSM
 | Version | Date | Notes |
 |---|---|---|
 | 0.1.0 | 2026-07-31 | initial contract set (MVP2 schema) |
+| 1.0.0 | 2026-08-02 | **BREAKING.** Realigned every table to the shape its consumer actually reads, and rewrote the landing envelope to the eleven-field provenance shape. See below. |
+
+## v1.0.0 — why this was a rewrite and not an expand
+
+The expand → migrate → contract dance above exists to protect **live data and
+live consumers**. v1.0.0 had neither: all 13 tables were verified empty (0 rows)
+and no repo had yet pinned v0.1.0. So the migration is a drop-and-recreate in
+`050-realign-v1.yaml` rather than a three-release additive sequence, which would
+have been ceremony with nothing to protect.
+
+What went wrong in v0.1.0 is worth recording, because it is the failure mode
+this whole repo exists to prevent: **the contract was written before any
+consumer existed, so it guessed — and guessed differently.** The landing
+envelope and repo 4's bronze reader agreed on zero of eleven field names; the
+table metadata columns disagreed too (`_batch_id` vs `_ingest_batch_id`,
+`_schema_version` vs `_envelope_version`, `_source_system` missing entirely).
+Neither would have failed loudly: Auto Loader routes unknown fields into
+`_rescued_data`, so bronze would have filled with silent NULLs.
+
+The rule this earns: **a contract is a hypothesis until a consumer compiles
+against it.** Draft the shape, build one consumer against it, *then* freeze the
+major version. From v1.0.0 on, the normal expand → migrate → contract process
+applies, because now there is something to protect.

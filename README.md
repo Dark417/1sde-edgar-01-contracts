@@ -75,16 +75,16 @@ use only the first:
 | `edgar_lakehouse_contracts` **wheel** | GitHub release asset | repos 3, 4, 5 — `pip install` |
 | **DDL** (`changelog/`) | applied to the workspace by this repo's own CI over JDBC | nobody — it produces the *tables*, which is what consumers actually read |
 
-Latest release: **[v0.1.0](https://github.com/Dark417/1sde-edgar-01-contracts/releases/tag/v0.1.0)**
+Latest release: **[v1.0.0](https://github.com/Dark417/1sde-edgar-01-contracts/releases/tag/v1.0.0)**
 
 ```bash
-pip install https://github.com/Dark417/1sde-edgar-01-contracts/releases/download/v0.1.0/edgar_lakehouse_contracts-0.1.0-py3-none-any.whl
+pip install https://github.com/Dark417/1sde-edgar-01-contracts/releases/download/v1.0.0/edgar_lakehouse_contracts-1.0.0-py3-none-any.whl
 ```
 
 In a Databricks notebook or serverless job:
 
 ```python
-%pip install https://github.com/Dark417/1sde-edgar-01-contracts/releases/download/v0.1.0/edgar_lakehouse_contracts-0.1.0-py3-none-any.whl
+%pip install https://github.com/Dark417/1sde-edgar-01-contracts/releases/download/v1.0.0/edgar_lakehouse_contracts-1.0.0-py3-none-any.whl
 dbutils.library.restartPython()
 ```
 
@@ -92,7 +92,7 @@ In a consumer's `pyproject.toml` (exact pin, never a range):
 
 ```toml
 dependencies = [
-  "edgar-lakehouse-contracts @ https://github.com/Dark417/1sde-edgar-01-contracts/releases/download/v0.1.0/edgar_lakehouse_contracts-0.1.0-py3-none-any.whl",
+  "edgar-lakehouse-contracts @ https://github.com/Dark417/1sde-edgar-01-contracts/releases/download/v1.0.0/edgar_lakehouse_contracts-1.0.0-py3-none-any.whl",
 ]
 ```
 

@@ -103,7 +103,7 @@ DQ_CHECKS: Final[tuple[DQCheck, ...]] = (
         name="company_name_present",
         table=_SILVER_COMPANY,
         severity="reject",
-        expression="name IS NOT NULL AND length(name) > 0",
+        expression="company_name IS NOT NULL AND length(company_name) > 0",
         prevents="Nameless company rows rendering as blanks in the UI search panel",
     ),
     DQCheck(
@@ -181,7 +181,7 @@ DQ_CHECKS: Final[tuple[DQCheck, ...]] = (
         table=_SILVER_FACT,
         severity="reject_batch",
         expression=(
-            "count(*) OVER (PARTITION BY cik, taxonomy, concept, unit,"
+            "count(*) OVER (PARTITION BY cik, taxonomy, concept_tag, unit,"
             " period_start, period_end, accession_number) = 1"
         ),
         prevents=(
