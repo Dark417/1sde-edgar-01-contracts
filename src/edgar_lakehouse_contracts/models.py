@@ -58,6 +58,26 @@ class Layer(StrEnum):
     GOLD = "gold"
 
 
+class Severity(StrEnum):
+    """Data-quality severities.
+
+    Three, not two, and the third is the one that matters:
+
+    ``reject``
+        The failing rows go to quarantine. The batch continues.
+    ``warn``
+        Nothing is removed; a metric is emitted and the run is marked.
+    ``reject_batch``
+        The whole batch is abandoned. Reserved for structural invariants — an SCD-2
+        dimension with two current rows for one natural key fans out every downstream
+        join, so a single bad row has to be fatal rather than quarantined.
+    """
+
+    REJECT = "reject"
+    WARN = "warn"
+    REJECT_BATCH = "reject_batch"
+
+
 @dataclass(frozen=True, slots=True)
 class ColumnSpec:
     """One column of a contract table."""
