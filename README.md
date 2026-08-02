@@ -65,11 +65,45 @@ liquibase update-sql   # read the plan before applying
 liquibase update
 ```
 
-## Consumers
+## Consumers — installing the published wheel
 
-Repos 2–5 pin `edgar-lakehouse-contracts==<version>` exactly and never read
-`main`. Breaking changes follow expand → migrate → contract with the rollout
-order `contracts → pipelines → ingest → serving` (see
+This repo publishes **two artifacts by two different channels**, and consumers
+use only the first:
+
+| Artifact | Channel | Consumed by |
+|---|---|---|
+| `edgar_lakehouse_contracts` **wheel** | GitHub release asset | repos 3, 4, 5 — `pip install` |
+| **DDL** (`changelog/`) | applied to the workspace by this repo's own CI over JDBC | nobody — it produces the *tables*, which is what consumers actually read |
+
+Latest release: **[v0.1.0](https://github.com/Dark417/1sde-edgar-01-contracts/releases/tag/v0.1.0)**
+
+```bash
+pip install https://github.com/Dark417/1sde-edgar-01-contracts/releases/download/v0.1.0/edgar_lakehouse_contracts-0.1.0-py3-none-any.whl
+```
+
+In a Databricks notebook or serverless job:
+
+```python
+%pip install https://github.com/Dark417/1sde-edgar-01-contracts/releases/download/v0.1.0/edgar_lakehouse_contracts-0.1.0-py3-none-any.whl
+dbutils.library.restartPython()
+```
+
+In a consumer's `pyproject.toml` (exact pin, never a range):
+
+```toml
+dependencies = [
+  "edgar-lakehouse-contracts @ https://github.com/Dark417/1sde-edgar-01-contracts/releases/download/v0.1.0/edgar_lakehouse_contracts-0.1.0-py3-none-any.whl",
+]
+```
+
+The wheel carries Python only — models, names, DQ registry, Spark
+`StructType`s, `py.typed`. It deliberately does **not** contain the Liquibase
+changelogs: those are executed once against the workspace, not imported
+(see [ADR-002](docs/ADR-002-liquibase-vs-python-schemas.md)).
+
+Repos 2–5 pin an exact version and never read `main`. Breaking changes follow
+expand → migrate → contract with the rollout order
+`contracts → pipelines → ingest → serving` (see
 [MIGRATION.md](docs/MIGRATION.md)).
 
 > Built on Databricks **Free Edition**, which is not licensed for commercial
