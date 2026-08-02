@@ -22,7 +22,7 @@
 5. **PATs have no scopes** — token is full-privilege-as-user; mitigations are lifetime (90d) + rotation. Current PAT was pasted in chat → **rotate when creating the AWS secret**.
 6. **Portable toolchain over installs**: `tools/` holds Temurin 17 JRE + Liquibase 5.0.3 + databricks extension + Simba JDBC 2.7.3 (gitignored, no admin). Docker was rejected in practice — Desktop engine wouldn't start. Also unblocked local `pytest -m spark`.
 7. **Local "Databricks alternative"** = three substitutes, no emulator: local Spark+delta-spark (repo 4 tests), Liquibase `offline:databricks` (plan-only), DuckDB over Parquet (repo 5's whole design).
-8. **`/liquibase` skill** (`.claude/skills/liquibase/`) wraps validate/plan/update/status/history; rule: never `update` without a shown `plan`.
+8. **`/liquibase` skill** (`.ai/skills/liquibase/`) wraps validate/plan/update/status/history; rule: never `update` without a shown `plan`.
 
 ## Problems hit → fixes (gotcha list)
 
