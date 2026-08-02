@@ -139,6 +139,9 @@ class TestFilingIndexRecord:
             cik="320193",
             date_filed="2026-07-29",
             file_name="edgar/data/320193/0000320193-26-000123.txt",
+            accession_number="0000320193-26-000123",
         )
         assert record.cik == "320193"  # stays a string: leading zeros matter
         assert record.date_filed == "2026-07-29"  # typing happens in silver
+        # Extracted from file_name by the ingest parser, not normalized here.
+        assert record.accession_number == "0000320193-26-000123"
