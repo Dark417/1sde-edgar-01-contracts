@@ -1,4 +1,16 @@
-# Repo 1 / 5 — `1sde-edgar-01-contracts`
+# Repo 1 / 6 — `1sde-edgar-01-contracts`
+
+> ## ⚠️ Read `AGENTS.global.md` first
+>
+> This file covers **this repo only**. The project-wide rules — repo boundaries,
+> the sensitive-values policy, the required response format, region, and the
+> cross-repo laws — live in [`AGENTS.global.md`](AGENTS.global.md) beside this
+> file, propagated from the workspace root. **Read it before acting.**
+>
+> Precedence: global rules bind everywhere; where this file and the global rules
+> genuinely conflict, this file wins **for this repo** and the conflict is worth
+> reporting rather than silently resolving.
+
 
 > **How to use this file.** Copy it to the repo root as `AGENTS.md`. It is the
 > complete brief for a coding agent building this repo. Sections 0–8 are agent
