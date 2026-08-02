@@ -68,9 +68,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-# The liquibase-github-actions image ships the Databricks extension but NOT the
-      # Simba JDBC driver, so it cannot resolve jdbc:databricks:// URLs. Install the
-      # CLI plus both jars directly instead (same recipe as tools/ locally).
+      # The liquibase-github-actions image ships the Databricks extension but NOT
+      # the Simba JDBC driver, so it cannot resolve jdbc:databricks:// URLs. Install
+      # the CLI plus both jars directly instead (same recipe as tools/ locally).
       - name: Install Liquibase + Databricks extension + JDBC driver
         run: |
           curl -sL -o /tmp/liquibase.tar.gz https://github.com/liquibase/liquibase/releases/download/v5.0.3/liquibase-5.0.3.tar.gz
