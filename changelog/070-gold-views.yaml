@@ -1,0 +1,176 @@
+# v1.1.0 -- the consumer-facing views.
+#
+# Views are DDL, so they live here and not in repo 4 (global law 2: one owner per
+# object). Repo 4 and repo 5 read them; neither creates them.
+#
+# Why views rather than more gold tables: every one of these is a filter or a join over
+# data gold already holds. Materializing them would add a second copy that can go stale
+# and a second thing to schedule, to answer questions that cost nothing to compute.
+#
+# `CREATE OR REPLACE VIEW` via raw sql rather than Liquibase's `createView`: the
+# Databricks extension emits `CREATE VIEW`, which fails on re-run, and these changesets
+# carry `runOnChange: true` so editing the SQL below re-applies it. That combination is
+# what makes a view definition safe to iterate on.
+databaseChangeLog:
+
+  - changeSet:
+      id: 070-view-company-current
+      author: dark417
+      runOnChange: true
+      comment: The current SCD-2 row per company. Consumers should never write is_current themselves.
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              CREATE OR REPLACE VIEW edgar.gold.v_company_current AS
+              SELECT
+                company_sk, cik, company_name, sic, sic_description, ein, entity_type,
+                state_of_incorporation, fiscal_year_end, tickers, exchanges, former_names,
+                version_number, valid_from, _last_seen_ts
+              FROM edgar.silver.company
+              WHERE is_current
+      rollback:
+        - sql: {sql: "DROP VIEW IF EXISTS edgar.gold.v_company_current"}
+
+  - changeSet:
+      id: 070-view-filing-current
+      author: dark417
+      runOnChange: true
+      comment: The current version of each filing, amendments included.
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              CREATE OR REPLACE VIEW edgar.gold.v_filing_current AS
+              SELECT
+                filing_sk, accession_number, cik, company_name, form_type, base_form_type,
+                is_amendment, filed_date, primary_doc_url, version_number, valid_from,
+                _last_seen_ts
+              FROM edgar.silver.filing
+              WHERE is_current
+      rollback:
+        - sql: {sql: "DROP VIEW IF EXISTS edgar.gold.v_filing_current"}
+
+  - changeSet:
+      id: 070-view-financials-latest
+      author: dark417
+      runOnChange: true
+      comment: >-
+        The current assertion per fact key. This is the view repo 5 should query for
+        "what are this company's numbers" -- superseded assertions are excluded, so a
+        restated figure never double-counts.
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              CREATE OR REPLACE VIEW edgar.gold.v_financials_latest AS
+              SELECT
+                f.fact_sk, f.cik, c.company_name, f.concept_canonical, f.concept_tag,
+                f.unit, f.value, f.decimals, f.period_start, f.period_end, f.period_type,
+                f.fiscal_year, f.fiscal_period, f.form_type, f.accession_number,
+                f.filed_date, f.assertion_version
+              FROM edgar.silver.financial_fact f
+              LEFT JOIN edgar.silver.company c
+                ON c.cik = f.cik AND c.is_current
+              WHERE f.is_current_assertion
+      rollback:
+        - sql: {sql: "DROP VIEW IF EXISTS edgar.gold.v_financials_latest"}
+
+  - changeSet:
+      id: 070-view-restatement-history
+      author: dark417
+      runOnChange: true
+      comment: >-
+        Original and restated assertion side by side, straight from silver rather than
+        from gold.restatement_event -- so the two can be compared and the gold builder
+        checked against its own inputs.
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              CREATE OR REPLACE VIEW edgar.gold.v_restatement_history AS
+              SELECT
+                orig.cik,
+                orig.concept_canonical,
+                orig.unit,
+                orig.period_start,
+                orig.period_end,
+                orig.assertion_version        AS original_version,
+                orig.accession_number         AS original_accession_number,
+                orig.filed_date               AS original_filed_date,
+                orig.value                    AS original_value,
+                rest.assertion_version        AS restated_version,
+                rest.accession_number         AS restated_accession_number,
+                rest.filed_date               AS restated_filed_date,
+                rest.value                    AS restated_value,
+                abs(rest.value - orig.value)  AS delta_abs,
+                datediff(rest.filed_date, orig.filed_date) AS days_to_restatement
+              FROM edgar.silver.financial_fact orig
+              JOIN edgar.silver.financial_fact rest
+                ON  rest.fact_sk           = orig.fact_sk
+                AND rest.accession_number  = orig.superseded_by_accession
+              WHERE orig.superseded_by_accession IS NOT NULL
+      rollback:
+        - sql: {sql: "DROP VIEW IF EXISTS edgar.gold.v_restatement_history"}
+
+  - changeSet:
+      id: 070-view-company-timeline
+      author: dark417
+      runOnChange: true
+      comment: >-
+        Every SCD-2 version per company with the previous value alongside, so "what
+        changed and when" is one query. This is the view that makes version history
+        visible in a demo without hand-writing a self-join.
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              CREATE OR REPLACE VIEW edgar.gold.v_company_timeline AS
+              SELECT
+                company_sk,
+                cik,
+                version_number,
+                valid_from,
+                valid_to,
+                is_current,
+                company_name,
+                lag(company_name) OVER w AS previous_company_name,
+                sic,
+                lag(sic)          OVER w AS previous_sic,
+                state_of_incorporation,
+                lag(state_of_incorporation) OVER w AS previous_state_of_incorporation
+              FROM edgar.silver.company
+              WINDOW w AS (PARTITION BY cik ORDER BY version_number)
+      rollback:
+        - sql: {sql: "DROP VIEW IF EXISTS edgar.gold.v_company_timeline"}
+
+  - changeSet:
+      id: 070-view-pipeline-health
+      author: dark417
+      runOnChange: true
+      comment: >-
+        One row per table: how much is in it, how far behind it is, and how much was
+        quarantined. Operational, deliberately cheap, and the first thing to look at
+        when a run "succeeded" but the numbers look wrong.
+      changes:
+        - sql:
+            splitStatements: false
+            sql: |
+              CREATE OR REPLACE VIEW edgar.gold.v_pipeline_health AS
+              SELECT 'silver.company' AS table_name,
+                     count(*)                             AS row_count,
+                     count_if(is_current)                 AS current_row_count,
+                     max(_last_seen_ts)                   AS last_seen_ts,
+                     max(version_number)                  AS max_version
+              FROM edgar.silver.company
+              UNION ALL
+              SELECT 'silver.filing',
+                     count(*), count_if(is_current), max(_last_seen_ts), max(version_number)
+              FROM edgar.silver.filing
+              UNION ALL
+              SELECT 'silver.financial_fact',
+                     count(*), count_if(is_current_assertion), max(_last_seen_ts),
+                     max(assertion_version)
+              FROM edgar.silver.financial_fact
+      rollback:
+        - sql: {sql: "DROP VIEW IF EXISTS edgar.gold.v_pipeline_health"}

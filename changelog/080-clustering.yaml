@@ -1,0 +1,58 @@
+# v1.1.0 -- liquid clustering.
+#
+# Free Edition is serverless-only, where ZORDER is not available; liquid clustering is
+# the supported mechanism. Columns are chosen from the predicates gold and repo 5
+# actually issue, not from cardinality alone -- clustering on a high-cardinality column
+# nobody filters on costs write throughput and buys nothing.
+#
+# At ~750k silver rows this changes little that is measurable today. It is declared now
+# because the layout decision is part of the contract, and because adding it after the
+# tables are large means rewriting them.
+#
+# CLUSTER BY on an existing table only affects data written after it is set; there is no
+# data yet, so there is nothing to reorganize.
+databaseChangeLog:
+
+  - changeSet:
+      id: 080-cluster-bronze
+      author: dark417
+      comment: Every bronze read is a date-bounded incremental slice.
+      changes:
+        - sql: {sql: "ALTER TABLE edgar.bronze.filing_index_raw CLUSTER BY (logical_date)"}
+        - sql: {sql: "ALTER TABLE edgar.bronze.company_submissions_raw CLUSTER BY (logical_date)"}
+        - sql: {sql: "ALTER TABLE edgar.bronze.company_concept_raw CLUSTER BY (logical_date)"}
+      rollback:
+        - sql: {sql: "ALTER TABLE edgar.bronze.filing_index_raw CLUSTER BY NONE"}
+        - sql: {sql: "ALTER TABLE edgar.bronze.company_submissions_raw CLUSTER BY NONE"}
+        - sql: {sql: "ALTER TABLE edgar.bronze.company_concept_raw CLUSTER BY NONE"}
+
+  - changeSet:
+      id: 080-cluster-silver
+      author: dark417
+      comment: >-
+        company: point lookups by cik, and the SCD-2 merge condition.
+        filing: gold aggregates by filed_date, repo 5 filters by cik.
+        financial_fact: (cik, period_end) is the shape of every financial query.
+      changes:
+        - sql: {sql: "ALTER TABLE edgar.silver.company CLUSTER BY (cik)"}
+        - sql: {sql: "ALTER TABLE edgar.silver.filing CLUSTER BY (filed_date, cik)"}
+        - sql: {sql: "ALTER TABLE edgar.silver.financial_fact CLUSTER BY (cik, period_end)"}
+      rollback:
+        - sql: {sql: "ALTER TABLE edgar.silver.company CLUSTER BY NONE"}
+        - sql: {sql: "ALTER TABLE edgar.silver.filing CLUSTER BY NONE"}
+        - sql: {sql: "ALTER TABLE edgar.silver.financial_fact CLUSTER BY NONE"}
+
+  - changeSet:
+      id: 080-cluster-gold
+      author: dark417
+      comment: repo 5's primary access path is by company.
+      changes:
+        - sql: {sql: "ALTER TABLE edgar.gold.financials_current CLUSTER BY (cik)"}
+        - sql: {sql: "ALTER TABLE edgar.gold.restatement_event CLUSTER BY (cik)"}
+        - sql: {sql: "ALTER TABLE edgar.gold.company_profile CLUSTER BY (cik)"}
+        - sql: {sql: "ALTER TABLE edgar.gold.filing_activity_daily CLUSTER BY (filed_date)"}
+      rollback:
+        - sql: {sql: "ALTER TABLE edgar.gold.financials_current CLUSTER BY NONE"}
+        - sql: {sql: "ALTER TABLE edgar.gold.restatement_event CLUSTER BY NONE"}
+        - sql: {sql: "ALTER TABLE edgar.gold.company_profile CLUSTER BY NONE"}
+        - sql: {sql: "ALTER TABLE edgar.gold.filing_activity_daily CLUSTER BY NONE"}

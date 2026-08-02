@@ -80,6 +80,14 @@ COLUMN_SPECS: Final[Mapping[str, tuple[ColumnSpec, ...]]] = {
         ("filed_date", "DATE", False),
         ("primary_doc_url", "STRING", True),
         ("logical_date", "DATE", False),
+        # SCD-2 (060). Filings are amended, and the previous MERGE overwrote, so the
+        # pre-amendment values were lost -- which is the history restatement_event needs.
+        ("filing_sk", "STRING", False),
+        ("version_number", "INT", False),
+        ("valid_from", "DATE", False),
+        ("valid_to", "DATE", True),
+        ("is_current", "BOOLEAN", False),
+        ("_hash_diff", "STRING", False),
         ("_first_seen_ts", "TIMESTAMP", False),
         ("_last_seen_ts", "TIMESTAMP", False),
         ("_ingest_batch_id", "STRING", False),
@@ -97,6 +105,9 @@ COLUMN_SPECS: Final[Mapping[str, tuple[ColumnSpec, ...]]] = {
         ("tickers", "ARRAY<STRING>", True),
         ("exchanges", "ARRAY<STRING>", True),
         ("former_names", "ARRAY<STRING>", True),
+        # 060: the interval was already here; the ordinal and the surrogate key are new.
+        ("company_sk", "STRING", False),
+        ("version_number", "INT", False),
         ("valid_from", "DATE", False),
         ("valid_to", "DATE", True),
         ("is_current", "BOOLEAN", False),
@@ -124,6 +135,12 @@ COLUMN_SPECS: Final[Mapping[str, tuple[ColumnSpec, ...]]] = {
         ("filed_date", "DATE", False),
         ("frame", "STRING", True),
         ("logical_date", "DATE", False),
+        # Assertion versioning (060). A restatement is a new assertion about the same
+        # period, not a correction to a row, so both are kept and ordered.
+        ("fact_sk", "STRING", False),
+        ("assertion_version", "INT", False),
+        ("is_current_assertion", "BOOLEAN", False),
+        ("superseded_by_accession", "STRING", True),
         ("_first_seen_ts", "TIMESTAMP", False),
         ("_last_seen_ts", "TIMESTAMP", False),
         ("_ingest_batch_id", "STRING", False),
@@ -181,6 +198,7 @@ COLUMN_SPECS: Final[Mapping[str, tuple[ColumnSpec, ...]]] = {
         ("was_restated", "BOOLEAN", False),
         ("_generated_at", "TIMESTAMP", False),
         ("_run_id", "STRING", False),
+        ("_source_version", "BIGINT", True),
     ),
     names.table(names.SCHEMA_GOLD, "restatement_event"): (
         ("restatement_id", "STRING", False),
@@ -207,6 +225,7 @@ COLUMN_SPECS: Final[Mapping[str, tuple[ColumnSpec, ...]]] = {
         ("days_to_restatement", "INT", False),
         ("_generated_at", "TIMESTAMP", False),
         ("_run_id", "STRING", False),
+        ("_source_version", "BIGINT", True),
     ),
     names.table(names.SCHEMA_GOLD, "filing_activity_daily"): (
         ("filed_date", "DATE", False),
@@ -216,6 +235,7 @@ COLUMN_SPECS: Final[Mapping[str, tuple[ColumnSpec, ...]]] = {
         ("distinct_cik_count", "INT", False),
         ("_generated_at", "TIMESTAMP", False),
         ("_run_id", "STRING", False),
+        ("_source_version", "BIGINT", True),
     ),
     names.table(names.SCHEMA_GOLD, "company_profile"): (
         ("cik", "STRING", False),
@@ -233,6 +253,7 @@ COLUMN_SPECS: Final[Mapping[str, tuple[ColumnSpec, ...]]] = {
         ("restatement_count", "INT", False),
         ("_generated_at", "TIMESTAMP", False),
         ("_run_id", "STRING", False),
+        ("_source_version", "BIGINT", True),
     ),
 }
 

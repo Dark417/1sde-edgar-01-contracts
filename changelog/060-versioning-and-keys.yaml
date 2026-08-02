@@ -1,0 +1,202 @@
+# v1.1.0 -- version history, surrogate keys and gold lineage.
+#
+# Additive, unlike 050. Every change here is `addColumn`, so the tables keep their
+# identity and their Delta history: a consumer pinned to v1.0.0 keeps working because
+# every new column is nullable at creation, and nothing existing is renamed or dropped.
+# 050 could drop-and-recreate because it was repairing a shape that had never held data;
+# repairing is a one-off, and evolution should not be.
+#
+# Three NOT NULL constraints are applied afterwards with `ALTER COLUMN ... SET NOT NULL`.
+# Delta cannot add a NOT NULL column to an existing table in one step -- the column has
+# to exist and be verified null-free first. That verification is free today (the tables
+# are empty) and correct later (the statement fails rather than corrupting anything).
+#
+# What this enables, per docs in repo 4 (05-layer-signature-and-versioning.md):
+#   * silver.filing becomes SCD-2. It is currently overwrite-on-merge, so an amended
+#     filing destroys the original -- which is exactly the history gold.restatement_event
+#     is supposed to be built from.
+#   * version_number makes "which version is this" answerable without an interval join.
+#   * *_sk give downstream a single stable join key instead of a composite.
+#   * financial_fact gains assertion versioning: a restatement is a NEW assertion about
+#     the same period, not a correction to a row, so both are kept.
+#   * gold records the Delta version of the silver input it was built from.
+databaseChangeLog:
+
+  # --------------------------------------------------------------- silver.company
+  - changeSet:
+      id: 060-silver-company-version-number
+      author: dark417
+      comment: >-
+        Dense 1-based version counter per cik. valid_from/valid_to already express the
+        interval; this expresses the ordinal, which is what a human reads first and what
+        makes "give me version 2" a filter rather than a window function.
+      changes:
+        - addColumn:
+            catalogName: edgar
+            schemaName: silver
+            tableName: company
+            columns:
+              - column: {name: version_number, type: INT}
+              - column: {name: company_sk, type: STRING}
+      rollback:
+        - dropColumn: {catalogName: edgar, schemaName: silver, tableName: company, columnName: version_number}
+        - dropColumn: {catalogName: edgar, schemaName: silver, tableName: company, columnName: company_sk}
+
+  - changeSet:
+      id: 060-silver-company-not-null
+      author: dark417
+      comment: >-
+        Enforce after backfill. Runs against an empty table today; on a populated table
+        it fails loudly rather than silently admitting nulls into a key column.
+      changes:
+        - sql:
+            sql: ALTER TABLE edgar.silver.company ALTER COLUMN version_number SET NOT NULL
+        - sql:
+            sql: ALTER TABLE edgar.silver.company ALTER COLUMN company_sk SET NOT NULL
+      rollback:
+        - sql:
+            sql: ALTER TABLE edgar.silver.company ALTER COLUMN version_number DROP NOT NULL
+        - sql:
+            sql: ALTER TABLE edgar.silver.company ALTER COLUMN company_sk DROP NOT NULL
+
+  # ---------------------------------------------------------------- silver.filing
+  - changeSet:
+      id: 060-silver-filing-scd2
+      author: dark417
+      comment: >-
+        Make silver.filing SCD-2. Filings are amended (10-K/A supersedes 10-K) and the
+        current MERGE overwrites, so the pre-amendment form_type, company_name and
+        primary_doc_url are lost. _hash_diff is the change-detection key over exactly
+        those tracked columns.
+      changes:
+        - addColumn:
+            catalogName: edgar
+            schemaName: silver
+            tableName: filing
+            columns:
+              - column: {name: filing_sk, type: STRING}
+              - column: {name: version_number, type: INT}
+              - column: {name: valid_from, type: DATE}
+              - column: {name: valid_to, type: DATE}
+              - column: {name: is_current, type: BOOLEAN}
+              - column: {name: _hash_diff, type: STRING}
+      rollback:
+        - dropColumn: {catalogName: edgar, schemaName: silver, tableName: filing, columnName: filing_sk}
+        - dropColumn: {catalogName: edgar, schemaName: silver, tableName: filing, columnName: version_number}
+        - dropColumn: {catalogName: edgar, schemaName: silver, tableName: filing, columnName: valid_from}
+        - dropColumn: {catalogName: edgar, schemaName: silver, tableName: filing, columnName: valid_to}
+        - dropColumn: {catalogName: edgar, schemaName: silver, tableName: filing, columnName: is_current}
+        - dropColumn: {catalogName: edgar, schemaName: silver, tableName: filing, columnName: _hash_diff}
+
+  - changeSet:
+      id: 060-silver-filing-not-null
+      author: dark417
+      comment: >-
+        valid_to stays nullable: NULL is what "still current" means for an open interval.
+      changes:
+        - sql:
+            sql: ALTER TABLE edgar.silver.filing ALTER COLUMN filing_sk SET NOT NULL
+        - sql:
+            sql: ALTER TABLE edgar.silver.filing ALTER COLUMN version_number SET NOT NULL
+        - sql:
+            sql: ALTER TABLE edgar.silver.filing ALTER COLUMN valid_from SET NOT NULL
+        - sql:
+            sql: ALTER TABLE edgar.silver.filing ALTER COLUMN is_current SET NOT NULL
+        - sql:
+            sql: ALTER TABLE edgar.silver.filing ALTER COLUMN _hash_diff SET NOT NULL
+      rollback:
+        - sql:
+            sql: ALTER TABLE edgar.silver.filing ALTER COLUMN filing_sk DROP NOT NULL
+        - sql:
+            sql: ALTER TABLE edgar.silver.filing ALTER COLUMN version_number DROP NOT NULL
+        - sql:
+            sql: ALTER TABLE edgar.silver.filing ALTER COLUMN valid_from DROP NOT NULL
+        - sql:
+            sql: ALTER TABLE edgar.silver.filing ALTER COLUMN is_current DROP NOT NULL
+        - sql:
+            sql: ALTER TABLE edgar.silver.filing ALTER COLUMN _hash_diff DROP NOT NULL
+
+  # -------------------------------------------------------- silver.financial_fact
+  - changeSet:
+      id: 060-silver-financial-fact-assertions
+      author: dark417
+      comment: >-
+        Facts are not a dimension. A restatement is a new assertion about the same
+        period, so both rows are kept and ordered by assertion_version rather than one
+        overwriting the other. superseded_by_accession points forward to the assertion
+        that replaced this one, which makes gold.restatement_event a join instead of a
+        reconstruction from Delta history.
+      changes:
+        - addColumn:
+            catalogName: edgar
+            schemaName: silver
+            tableName: financial_fact
+            columns:
+              - column: {name: fact_sk, type: STRING}
+              - column: {name: assertion_version, type: INT}
+              - column: {name: is_current_assertion, type: BOOLEAN}
+              - column: {name: superseded_by_accession, type: STRING}
+      rollback:
+        - dropColumn: {catalogName: edgar, schemaName: silver, tableName: financial_fact, columnName: fact_sk}
+        - dropColumn: {catalogName: edgar, schemaName: silver, tableName: financial_fact, columnName: assertion_version}
+        - dropColumn: {catalogName: edgar, schemaName: silver, tableName: financial_fact, columnName: is_current_assertion}
+        - dropColumn: {catalogName: edgar, schemaName: silver, tableName: financial_fact, columnName: superseded_by_accession}
+
+  - changeSet:
+      id: 060-silver-financial-fact-not-null
+      author: dark417
+      changes:
+        - sql:
+            sql: ALTER TABLE edgar.silver.financial_fact ALTER COLUMN fact_sk SET NOT NULL
+        - sql:
+            sql: ALTER TABLE edgar.silver.financial_fact ALTER COLUMN assertion_version SET NOT NULL
+        - sql:
+            sql: ALTER TABLE edgar.silver.financial_fact ALTER COLUMN is_current_assertion SET NOT NULL
+      rollback:
+        - sql:
+            sql: ALTER TABLE edgar.silver.financial_fact ALTER COLUMN fact_sk DROP NOT NULL
+        - sql:
+            sql: ALTER TABLE edgar.silver.financial_fact ALTER COLUMN assertion_version DROP NOT NULL
+        - sql:
+            sql: ALTER TABLE edgar.silver.financial_fact ALTER COLUMN is_current_assertion DROP NOT NULL
+
+  # ------------------------------------------------------------------------- gold
+  - changeSet:
+      id: 060-gold-source-version
+      author: dark417
+      comment: >-
+        The Delta version of the silver input each gold row was built from. This is the
+        reproducibility hook: it turns "gold looked wrong last Tuesday" into
+        `SELECT * FROM edgar.silver.<t> VERSION AS OF <n>` instead of a guess.
+        Nullable: a gold table built before this column existed has no honest value for
+        it, and inventing one would be worse than admitting the gap.
+      changes:
+        - addColumn:
+            catalogName: edgar
+            schemaName: gold
+            tableName: financials_current
+            columns:
+              - column: {name: _source_version, type: BIGINT}
+        - addColumn:
+            catalogName: edgar
+            schemaName: gold
+            tableName: restatement_event
+            columns:
+              - column: {name: _source_version, type: BIGINT}
+        - addColumn:
+            catalogName: edgar
+            schemaName: gold
+            tableName: company_profile
+            columns:
+              - column: {name: _source_version, type: BIGINT}
+        - addColumn:
+            catalogName: edgar
+            schemaName: gold
+            tableName: filing_activity_daily
+            columns:
+              - column: {name: _source_version, type: BIGINT}
+      rollback:
+        - dropColumn: {catalogName: edgar, schemaName: gold, tableName: financials_current, columnName: _source_version}
+        - dropColumn: {catalogName: edgar, schemaName: gold, tableName: restatement_event, columnName: _source_version}
+        - dropColumn: {catalogName: edgar, schemaName: gold, tableName: company_profile, columnName: _source_version}
+        - dropColumn: {catalogName: edgar, schemaName: gold, tableName: filing_activity_daily, columnName: _source_version}
