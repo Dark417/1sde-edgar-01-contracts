@@ -68,13 +68,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+# The liquibase-github-actions image ships the Databricks extension but NOT the
+      # Simba JDBC driver, so it cannot resolve jdbc:databricks:// URLs. Install the
+      # CLI plus both jars directly instead (same recipe as tools/ locally).
+      - name: Install Liquibase + Databricks extension + JDBC driver
+        run: |
+          curl -sL -o /tmp/liquibase.tar.gz https://github.com/liquibase/liquibase/releases/download/v5.0.3/liquibase-5.0.3.tar.gz
+          mkdir -p /tmp/liquibase && tar -xzf /tmp/liquibase.tar.gz -C /tmp/liquibase
+          curl -sL -o /tmp/liquibase/internal/lib/liquibase-databricks.jar \
+            https://github.com/liquibase/liquibase-databricks/releases/download/v5.0.3/liquibase-databricks-5.0.3.jar
+          curl -sL -o /tmp/jdbc.zip \
+            "https://databricks-bi-artifacts.s3.us-east-2.amazonaws.com/simbaspark-drivers/jdbc/2.7.3/DatabricksJDBC42-2.7.3.1010.zip"
+          unzip -q /tmp/jdbc.zip -d /tmp/jdbc
+          cp /tmp/jdbc/*/DatabricksJDBC42.jar /tmp/liquibase/internal/lib/
+
       - name: Liquibase update against the workspace
-        uses: liquibase-github-actions/update@v4.32.0
-        with:
-          changelogFile: changelog/db.changelog-root.yaml
-          url: "jdbc:databricks://${{ secrets.DBX_HOST }}:443/default;transportMode=http;ssl=1;httpPath=${{ secrets.DBX_HTTP_PATH }};ConnCatalog=edgar;ConnSchema=default"
-          username: token
-          password: ${{ secrets.DBX_PAT }}
+        env:
+          LIQUIBASE_COMMAND_URL: "jdbc:databricks://${{ secrets.DBX_HOST }}:443/default;transportMode=http;ssl=1;httpPath=${{ secrets.DBX_HTTP_PATH }};ConnCatalog=edgar;ConnSchema=default"
+          LIQUIBASE_COMMAND_USERNAME: token
+          LIQUIBASE_COMMAND_PASSWORD: ${{ secrets.DBX_PAT }}
+          LIQUIBASE_COMMAND_DRIVER: com.databricks.client.jdbc.Driver
+        run: |
+          /tmp/liquibase/liquibase --changelog-file=changelog/db.changelog-root.yaml update
 
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
