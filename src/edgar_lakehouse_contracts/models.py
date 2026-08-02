@@ -25,3 +25,9 @@ class FilingIndexRecord(BaseModel):
     cik: str
     date_filed: str
     file_name: str
+    #: The accession number, sliced out of ``file_name``. This is extraction, not
+    #: normalization: the .idx file has no accession column, but every ``file_name``
+    #: embeds one (``edgar/data/<cik>/<accession>.txt``). Bronze needs it as the
+    #: filing's natural key and cannot re-derive it without parsing a path, which is
+    #: exactly the kind of source-format knowledge that belongs in the ingest parser.
+    accession_number: str

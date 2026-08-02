@@ -46,12 +46,22 @@ class TestLandingPath:
 
     def test_s3_prefix(self) -> None:
         path = names.landing_path("s3", Stream.FILING_INDEX, date(2026, 7, 29))
-        assert path.startswith("s3://edgar-lake-raw/edgar/filing_index/dt=2026-07-29/")
+        assert path.startswith("s3://edgar-lake-raw/edgar/filing_index/logical_date=2026-07-29/")
         assert path.endswith(".json.gz")
 
     def test_volume_prefix(self) -> None:
         path = names.landing_path("volume", Stream.COMPANY_CONCEPT, date(2026, 7, 29))
-        assert path.startswith("/Volumes/edgar/landing/edgar/company_concept/dt=2026-07-29/")
+        assert path.startswith(
+            "/Volumes/edgar/landing/edgar/company_concept/logical_date=2026-07-29/"
+        )
+
+    def test_partition_key_is_logical_date(self) -> None:
+        """Auto Loader names the derived column after the partition key, and repo 4's
+        bronze reads `logical_date`. With `dt=` every row would land with a null date."""
+        for mode in ("s3", "volume"):
+            path = names.landing_path(mode, Stream.FILING_INDEX, date(2026, 7, 29))  # type: ignore[arg-type]
+            assert "/logical_date=2026-07-29/" in path
+            assert "/dt=" not in path
 
     def test_custom_bucket(self) -> None:
         path = names.landing_path("s3", Stream.FILING_INDEX, date(2026, 7, 29), raw_bucket="b")

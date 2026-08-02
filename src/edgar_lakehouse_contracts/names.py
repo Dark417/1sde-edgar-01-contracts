@@ -73,10 +73,15 @@ def landing_path(
     """
     stream_value = str(Stream(stream).value)
     filename = f"{batch_id(stream_value, logical_date)}.json.gz"
-    suffix = f"edgar/{stream_value}/dt={logical_date.isoformat()}/{filename}"
+    # The partition key is `logical_date=`, not `dt=`. Auto Loader derives a column
+    # named after the key, and repo 4's bronze reads `logical_date` -- with `dt=` it
+    # would silently get no partition column at all and every row would carry a null
+    # logical date. The name is part of the contract, not cosmetic.
+    partition = f"logical_date={logical_date.isoformat()}"
+    suffix = f"edgar/{stream_value}/{partition}/{filename}"
     if mode == "s3":
         return f"s3://{raw_bucket}/{suffix}"
-    return f"{VOLUME_LANDING}/{stream_value}/dt={logical_date.isoformat()}/{filename}"
+    return f"{VOLUME_LANDING}/{stream_value}/{partition}/{filename}"
 
 
 def pad_cik(cik: str | int) -> str:
