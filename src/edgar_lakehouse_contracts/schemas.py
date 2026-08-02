@@ -23,7 +23,15 @@ from edgar_lakehouse_contracts import names
 from edgar_lakehouse_contracts.models import ColumnSpec, Layer, TableSpec
 from edgar_lakehouse_contracts.spark.schemas import COLUMN_SPECS
 
-__all__ = ["TABLES", "table"]
+__all__ = [
+    "ALL_TABLES",
+    "BRONZE_METADATA_COLUMNS",
+    "EXPORT_TABLES",
+    "QUARANTINE_COLUMNS",
+    "TABLES",
+    "struct_for",
+    "table",
+]
 
 #: Facts about each table that the column list does not carry. Keyed by fqn.
 #:
@@ -108,3 +116,50 @@ def table(fqn: str) -> TableSpec:
         return TABLES[fqn]
     except KeyError:
         raise KeyError(f"unknown table {fqn!r}; known tables: {sorted(TABLES)}") from None
+
+
+# ---------------------------------------------------------------------------
+# The rest of the consumer surface.
+#
+# Published because repo 4 reached for every one of these, did not find them, and
+# reimplemented the lot. Enumerating what the consumer actually imports -- rather
+# than guessing one symbol at a time -- is what turns four version bumps into one.
+# ---------------------------------------------------------------------------
+
+#: The metadata columns carried by every bronze table.
+BRONZE_METADATA_COLUMNS: Final[tuple[ColumnSpec, ...]] = TABLES[
+    "edgar.bronze.filing_index_raw"
+].columns[-6:]
+
+#: The single shape every quarantine table shares, which is what lets the DQ layer stay
+#: domain-agnostic instead of growing a branch per entity.
+QUARANTINE_COLUMNS: Final[tuple[ColumnSpec, ...]] = TABLES["edgar.silver.filing_quarantine"].columns
+
+#: Every table, ordered by fqn so any listing is stable across runs.
+ALL_TABLES: Final[tuple[TableSpec, ...]] = tuple(TABLES[k] for k in sorted(TABLES))
+
+#: The gold tables repo 4 exports to Parquet and repo 5 reads. The order is fixed
+#: because it is the order of the export manifest, and a manifest whose order moves
+#: produces a spurious diff on every run.
+EXPORT_TABLES: Final[tuple[TableSpec, ...]] = tuple(
+    TABLES[f"edgar.gold.{n}"]
+    for n in ("company_profile", "filing_activity_daily", "financials_current", "restatement_event")
+)
+
+# Per-table constants -- SILVER_COMPANY, GOLD_RESTATEMENT_EVENT and so on. Generated
+# from TABLES rather than hand-written, so adding a table cannot leave a stale constant
+# behind and removing one cannot leave a dangling name.
+for _spec in TABLES.values():
+    globals()[f"{_spec.schema.upper()}_{_spec.name.upper()}"] = _spec
+del _spec
+
+
+def struct_for(fqn: str) -> object:
+    """Spark ``StructType`` for a table. Imports pyspark lazily, on this call only.
+
+    Deliberately not a module-level import: everything above must be importable without
+    a JVM so that CI, tooling and non-Spark consumers can use this package.
+    """
+    from edgar_lakehouse_contracts.spark.schemas import get_schema
+
+    return get_schema(fqn)
