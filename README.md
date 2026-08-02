@@ -1,4 +1,4 @@
-# 1sde-databricks-edgar-01-contracts
+# 1sde-edgar-01-contracts
 
 **Repo 1 of 5** in the edgar-lakehouse project — the shared contract layer for a
 Databricks (AWS) medallion lakehouse over SEC EDGAR filings and XBRL financial

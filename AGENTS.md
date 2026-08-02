@@ -1,11 +1,11 @@
-# Repo 1 / 5 — `1sde-databricks-edgar-01-contracts`
+# Repo 1 / 5 — `1sde-edgar-01-contracts`
 
 > **How to use this file.** Copy it to the repo root as `AGENTS.md`. It is the
 > complete brief for a coding agent building this repo. Sections 0–8 are agent
 > instructions. Section 9 is for **you**, by hand. Section 10 is what the next repo
 > consumes — do not change it without bumping the major version.
 >
-> GitHub: `github.com/Dark417/1sde-databricks-edgar-01-contracts`
+> GitHub: `github.com/Dark417/1sde-edgar-01-contracts`
 > Build order position: **1 of 5. Nothing else compiles until this is published.**
 
 ---
@@ -94,7 +94,7 @@ A test asserts `import edgar_lakehouse_contracts` succeeds in an environment wit
 ## 4. Layered structure
 
 ```
-1sde-databricks-edgar-01-contracts/
+1sde-edgar-01-contracts/
 ├── AGENTS.md                        # this file
 ├── pyproject.toml
 ├── README.md
@@ -366,9 +366,9 @@ The role ARN comes from repo 2 — until repo 2 exists, publish manually (§9.7)
 
 ### 9.1 Create the repo
 ```bash
-gh repo create Dark417/1sde-databricks-edgar-01-contracts \
+gh repo create Dark417/1sde-edgar-01-contracts \
   --private --add-readme --gitignore Python --license mit --clone
-cd 1sde-databricks-edgar-01-contracts
+cd 1sde-edgar-01-contracts
 ```
 
 ### 9.2 Place the background docs 🔴

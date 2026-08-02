@@ -9,7 +9,7 @@ account at all**.
 ## A. Run the package locally (no Databricks, no Java)
 
 ```powershell
-cd 1sde-databricks-edgar-01-contracts
+cd 1sde-edgar-01-contracts
 python -m venv .venv
 .venv\Scripts\pip install -e ".[dev]"
 
