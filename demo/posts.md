@@ -2,8 +2,9 @@
 
 Three platforms, three different sets of norms. Paste as-is; do not merge them.
 
-**Before posting:** attach `architecture.svg` exported as PNG (LinkedIn and
-Discord will not render SVG). Check the repo link loads while logged out.
+**Before posting:** attach `architecture.png` (2000x1040, already rendered and
+in this folder — LinkedIn and Discord will not render the SVG). Check the repo
+link loads while logged out.
 
 ---
 
