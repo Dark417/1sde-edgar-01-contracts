@@ -225,3 +225,8 @@ tools/
 
 # offline-mode liquibase state file (local artifact)
 databasechangelog.csv
+docs/LOCAL-VALUES.md
+*.tfstate*
+*.pem
+*.key
+plan.txt

@@ -10,8 +10,8 @@
 | 01-contracts | **DONE & RELEASED: v0.1.0**, wheel on the GitHub release (public repo = the registry stand-in; S3 plan dropped). Release-on-tag pipeline: build -> liquibase update (CI, idempotent) -> publish. Only ADR-001 probe remains (needs raw bucket). |
 | 02-infra | Terraform on `main` (`d53aad5`), not yet applied. Needs §9 hand bootstrap: state bucket, 2 secrets, budget alarm → `plan`/`apply` → `imports.tf` adopts hand-created catalog. |
 | 03-ingest / 04-pipelines / 05-serving | AGENTS.md specs only; not generated. |
-| Databricks | Catalog `edgar` + 4 schemas + volume + 13 tables, Liquibase 14/14 changesets, idempotency verified. `fin` dropped. Host `dbc-6e85f573-bc49`, warehouse `733dc896c4c3751c`. |
-| AWS | Dedicated account `806168459926`, profile `edgar`, us-east-2. **Nothing bootstrapped.** |
+| Databricks | Catalog `edgar` + 4 schemas + volume + 13 tables, Liquibase 14/14 changesets, idempotency verified. `fin` dropped. Host `<DBX_WORKSPACE_ID>`, warehouse `<WAREHOUSE_ID>`. |
+| AWS | Dedicated account `<AWS_ACCOUNT_ID>`, profile `edgar`, us-east-2. **Nothing bootstrapped.** |
 
 ## Key decisions made (and the trade-off behind each)
 
@@ -37,7 +37,7 @@
 
 ## Decisions still open / next actions (in order)
 
-1. **AWS §9.1 bootstrap** (human or either session, profile `edgar`): tfstate bucket `edgar-lakehouse-tfstate-806168459926` + DynamoDB lock, the two secrets (with a **fresh, rotated PAT**), $10 budget alarm.
+1. **AWS §9.1 bootstrap** (human or either session, profile `edgar`): tfstate bucket `edgar-lakehouse-tfstate-<AWS_ACCOUNT_ID>` + DynamoDB lock, the two secrets (with a **fresh, rotated PAT**), $10 budget alarm.
 2. **Repo 2 `terraform plan` → hand-check → `apply`**, with `imports.tf` adopting the hand-created catalog/schemas/volume. Verify: schedule DISABLED, zero destroys, no plaintext secrets in plan.
 3. ~~Publish wheel~~ DONE: CONTRACTS_VERSION=0.1.0, install URL: https://github.com/Dark417/1sde-edgar-01-contracts/releases/download/v0.1.0/edgar_lakehouse_contracts-0.1.0-py3-none-any.whl . Still open: run the ADR-001 probe (`dbutils.fs.ls("s3://edgar-lake-raw/")`) and fill the ADR (`s3` vs `volume`; default stays `volume` until probed).
 4. **Generate repo 3 (ingest)** — needs a hand-collected `.idx` fixture (spec §9.3) and the SEC user-agent secret.
