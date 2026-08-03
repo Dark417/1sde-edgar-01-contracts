@@ -143,7 +143,7 @@ ALL_TABLES: Final[tuple[TableSpec, ...]] = tuple(TABLES[k] for k in sorted(TABLE
 #: produces a spurious diff on every run.
 EXPORT_TABLES: Final[tuple[TableSpec, ...]] = tuple(
     TABLES[f"edgar.gold.{n}"]
-    for n in ("company_profile", "filing_activity_daily", "financials_current", "restatement_event")
+    for n in ("financials_current", "restatement_event", "filing_activity_daily", "company_profile")
 )
 
 # Per-table constants -- SILVER_COMPANY, GOLD_RESTATEMENT_EVENT and so on. Generated
