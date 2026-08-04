@@ -1,5 +1,19 @@
 # 1sde-edgar-01-contracts
 
+> **Part of the [EDGAR lakehouse](https://github.com/Dark417/1sde-edgar-06-chatbot#readme)
+> project.** That README is the front door: the dataflow, the Databricks layers, how the
+> chatbot answers, how the six repositories fit together, and what it costs — one diagram
+> each.
+>
+> **Live:** [the site](https://edgar.xiaoxiaolei.com) ·
+> [the chatbot](https://edgar.xiaoxiaolei.com/chat) ·
+> [SEC EDGAR](https://www.sec.gov/edgar), the source of every figure.
+
+
+Repo 1 of 6. The shared vocabulary: one installable package that defines every
+table, column, file name and migration. Repos 3-6 depend on a pinned version of it and
+none keeps a private copy, so they cannot drift apart about what a column means.
+
 The shared schema contract for a six-repository SEC EDGAR lakehouse on
 Databricks. Every other repo depends on this one, and none depend on each other.
 
